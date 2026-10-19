@@ -260,7 +260,8 @@ fn check_view(errors: &mut Errors, path: &str, view: &View) {
     }
 }
 
-fn is_plain_name(name: &str) -> bool {
+/// Lowercase letters, digits and `-`: safe as a file name and as an id in a picture.
+pub fn is_plain_name(name: &str) -> bool {
     !name.is_empty()
         && name
             .chars()
@@ -468,6 +469,16 @@ pub fn build(film: &Film, dir: &Path) -> Result<Timeline, Vec<SpecError>> {
     let mut insets = Vec::new();
     for (i, inset) in film.insets.iter().enumerate() {
         let path = format!("insets[{i}]");
+        // shots and insets share one media folder, so their ids share one namespace
+        if !is_plain_name(&inset.id) || !ids.insert(inset.id.clone()) {
+            e.add(
+                format!("{path}.id"),
+                format!(
+                    "'{}' must be unique among shots and insets, lowercase letters, digits and -",
+                    inset.id
+                ),
+            );
+        }
         let start = e.time(beats, &format!("{path}.from"), &inset.from);
         let end = e.time(beats, &format!("{path}.to"), &inset.to);
         if start >= end || !inside(end) {

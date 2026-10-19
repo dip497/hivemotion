@@ -70,7 +70,8 @@ fn two_renders_of_the_same_frames_are_identical() {
     colour_take(dir.path(), "I1-hook.mp4", "0x3355aa", "3200x2000");
     colour_take(dir.path(), "W1-board.mp4", "0xaa5533", "3200x2000");
     let p = project(dir.path());
-    let times = [1.0, 2.2, 10.0, 62.5];
+    // 2.08 s is mid hex wipe, where the cut edge crosses the frame
+    let times = [1.0, 2.08, 2.2, 10.0, 62.5];
     let a = render_stills(&p, Aspect::Landscape, &times, &dir.path().join("a")).unwrap();
     let b = render_stills(&p, Aspect::Landscape, &times, &dir.path().join("b")).unwrap();
     for (x, y) in a.stills.iter().zip(&b.stills) {
@@ -132,6 +133,21 @@ fn a_shot_without_its_take_is_a_named_slate_not_the_last_take() {
         c[0] < 60 && c[1] < 60 && c[2] < 60,
         "the slate is not dark: {c:?}"
     );
+    // its label sits across the middle of the frame
+    let label = Command::new("ffmpeg")
+        .args(["-hide_banner", "-v", "error", "-i"])
+        .arg(&r.stills[0].file)
+        .args([
+            "-vf",
+            "crop=800:60:560:510,format=gray",
+            "-f",
+            "rawvideo",
+            "-",
+        ])
+        .output()
+        .unwrap();
+    let brightest = label.stdout.iter().copied().max().unwrap();
+    assert!(brightest > 100, "no slate label (brightest {brightest})");
 }
 
 #[test]
@@ -169,3 +185,4 @@ fn a_caption_too_wide_for_the_vertical_frame_is_shrunk_to_fit() {
         "text reaches the right edge (brightest {brightest})"
     );
 }
+

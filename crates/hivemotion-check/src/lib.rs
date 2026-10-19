@@ -8,7 +8,7 @@ use std::path::{Path, PathBuf};
 
 use anyhow::Result;
 use hivemotion_audio::{check as loudness, Gate, Verdict};
-use hivemotion_ffmpeg::{ffmpeg, secs};
+use hivemotion_ffmpeg::{ffmpeg, filter_text, secs};
 use hivemotion_spec::film::Aspect;
 use hivemotion_spec::timeline::{caption_motion::READ_PER_WORD, AspectPlan, Timeline};
 use hivemotion_spec::Project;
@@ -106,13 +106,6 @@ fn args(list: &[&str]) -> Vec<OsString> {
     list.iter().map(OsString::from).collect()
 }
 
-fn drawtext_escape(text: &str) -> String {
-    text.replace('\\', "\\\\")
-        .replace(':', "\\:")
-        .replace('\'', "\u{2019}")
-        .replace('%', "\\%")
-}
-
 /// Pull stills from `master` and tile labelled thumbnails into one contact sheet.
 pub fn stills_from_master(
     master: &Path,
@@ -138,12 +131,12 @@ pub fn stills_from_master(
         a.extend(args(&["-frames:v", "1", "-update", "1"]));
         a.push(file.clone().into());
         ffmpeg(a)?;
-        let label = drawtext_escape(&format!("{:.2}s {}", s.seconds, s.label));
+        let label = filter_text(&format!("{:.2}s {}", s.seconds, s.label));
         let font_arg = font
-            .map(|f| format!(":fontfile='{}'", f.display()))
+            .map(|f| format!(":fontfile={}", filter_text(&f.to_string_lossy())))
             .unwrap_or_default();
         let filter = format!(
-            "scale={thumb_width}:-2,pad=iw:ih+28:0:0:0x101215,drawtext=text='{label}'{font_arg}:fontsize=15:fontcolor=0xd0d4d8:x=8:y=h-21"
+            "scale={thumb_width}:-2,pad=iw:ih+28:0:0:0x101215,drawtext=expansion=none:text={label}{font_arg}:fontsize=15:fontcolor=0xd0d4d8:x=8:y=h-21"
         );
         let mut a = args(&["-v", "error", "-i"]);
         a.push(file.clone().into());

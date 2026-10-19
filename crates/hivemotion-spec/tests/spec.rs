@@ -62,6 +62,28 @@ fn a_shot_pointing_at_a_missing_beat_names_that_field() {
 }
 
 #[test]
+fn an_inset_id_that_climbs_out_of_the_media_folder_is_rejected() {
+    // prep writes <media>/<id>.mp4, so this id would write and delete outside the build
+    let (_dir, path) = edited_example(|film| film.replace("{ id: phone,", "{ id: ../../x,"));
+    let err = load(&path).unwrap_err();
+    assert!(
+        err.errors().iter().any(|e| e.path == "insets[0].id"),
+        "{err}"
+    );
+}
+
+#[test]
+fn an_inset_cannot_share_an_id_with_a_shot() {
+    // both are prepared into the same media folder by id; one would overwrite the other
+    let (_dir, path) = edited_example(|film| film.replace("{ id: phone,", "{ id: hook,"));
+    let err = load(&path).unwrap_err();
+    assert!(
+        err.errors().iter().any(|e| e.path == "insets[0].id"),
+        "{err}"
+    );
+}
+
+#[test]
 fn music_cues_that_disagree_name_the_cue() {
     // the second drop moved 0.5 s in the film but not in the track: the music would drift
     let (_dir, path) =

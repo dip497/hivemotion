@@ -158,6 +158,21 @@ pub fn last_json_object(log: &str) -> Option<serde_json::Value> {
     serde_json::from_str(&log[start..end]).ok()
 }
 
+/// Text (a file path, a label) made safe as one option value inside a filtergraph: escaped once
+/// for the option parser and once for the graph parser, so `' : , ; [ ] \` stay literal.
+/// Every filter built from text goes through this; drawtext also needs `expansion=none`.
+pub fn filter_text(text: &str) -> String {
+    let escape = |s: &str, special: &str| {
+        s.chars()
+            .flat_map(|c| {
+                let backslash = special.contains(c).then_some('\\');
+                backslash.into_iter().chain(std::iter::once(c))
+            })
+            .collect::<String>()
+    };
+    escape(&escape(text, "\\':"), "\\'[],;")
+}
+
 /// Format seconds for an ffmpeg argument.
 pub fn secs(t: f64) -> String {
     format!("{t:.6}")

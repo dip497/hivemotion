@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use hivemotion_check::{reading, still_times};
+use hivemotion_check::{reading, still_times, stills_from_master, StillAt};
 use hivemotion_spec::film::Aspect;
 
 fn example() -> PathBuf {
@@ -47,4 +47,40 @@ fn stills_cover_every_kept_beat_and_the_middle_of_every_transition() {
         .any(|x| x.label.contains("hit") && (x.seconds - 36.9).abs() < 1e-6));
     // the tool beat (40 s) is cut out of the vertical
     assert!(!vertical.iter().any(|x| x.label == "tool"));
+}
+
+#[test]
+fn filter_characters_in_a_label_or_font_path_stay_text() {
+    // a film's labels and folders come from whoever wrote it; none of this may become a filter option
+    let dir = tempfile::tempdir().unwrap();
+    let odd = dir.path().join("fonts ':,;[]\\ %{n}");
+    std::fs::create_dir_all(&odd).unwrap();
+    let font = odd.join("f'o:n,t.ttf");
+    std::fs::copy(
+        example().parent().unwrap().join("fonts/Geist-500.ttf"),
+        &font,
+    )
+    .unwrap();
+    let master = dir.path().join("master.mov");
+    let made = std::process::Command::new("ffmpeg")
+        .args(["-hide_banner", "-v", "error", "-y", "-f", "lavfi", "-i"])
+        .arg("testsrc2=s=640x360:r=30:d=2")
+        .arg(&master)
+        .status()
+        .unwrap()
+        .success();
+    assert!(made);
+    let at = [StillAt {
+        seconds: 1.0,
+        label: "x':fontsize=300,drawbox;[a]\\ %{pts}".into(),
+    }];
+    let stills = stills_from_master(
+        &master,
+        &at,
+        &dir.path().join("check"),
+        Aspect::Landscape,
+        Some(&font),
+    )
+    .unwrap();
+    assert!(stills.contact_sheet.is_file());
 }

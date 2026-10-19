@@ -4,7 +4,7 @@
 
 use std::path::{Path, PathBuf};
 
-use anyhow::{Context, Result};
+use anyhow::{bail, Context, Result};
 use hivemotion_ffmpeg::{ffmpeg, probe, secs};
 use hivemotion_spec::Project;
 use serde::Serialize;
@@ -33,6 +33,17 @@ struct Want {
     clip_start: f64,
     speed: f64,
     seconds: f64,
+}
+
+/// `<media>/<id>.<extension>`, refusing any id that could name a file outside the media folder.
+fn media_file(media: &Path, id: &str, extension: &str) -> Result<PathBuf> {
+    if !hivemotion_spec::timeline::is_plain_name(id) {
+        bail!(
+            "'{id}' is not a plain name; refusing to write outside {}",
+            media.display()
+        );
+    }
+    Ok(media.join(format!("{id}.{extension}")))
 }
 
 fn settings_text(w: &Want, fps: u32, modified: u64) -> String {
@@ -72,8 +83,8 @@ pub fn prep(project: &Project) -> Result<PrepReport> {
     let mut clips = Vec::new();
     let mut missing = Vec::new();
     for w in &wants {
-        let out = media.join(format!("{}.mp4", w.id));
-        let note = media.join(format!("{}.prep", w.id));
+        let out = media_file(&media, &w.id, "mp4")?;
+        let note = media_file(&media, &w.id, "prep")?;
         let Ok(meta) = std::fs::metadata(&w.source) else {
             let _ = std::fs::remove_file(&out);
             let _ = std::fs::remove_file(&note);

@@ -160,10 +160,12 @@ pub fn master_file(input: &Path, output: &Path, target: &Loudness) -> Result<Mas
     ] as [&std::ffi::OsStr; 7])?;
     let m = last_json_object(&first).ok_or_else(|| anyhow!("loudnorm printed no measurement"))?;
     let get = |k: &str| -> Result<String> {
+        // only a number goes back into the filter
         m.get(k)
             .and_then(|v| v.as_str())
-            .map(str::to_string)
-            .ok_or_else(|| anyhow!("loudnorm's first pass has no {k}"))
+            .and_then(|v| v.trim().parse::<f64>().ok())
+            .map(|v| v.to_string())
+            .ok_or_else(|| anyhow!("loudnorm's first pass has no number for {k}"))
     };
     let second_filter = format!(
         "{pre}{norm}:measured_I={}:measured_TP={}:measured_LRA={}:measured_thresh={}:offset={}:linear=true:print_format=json,{},aresample={SAMPLE_RATE}",
