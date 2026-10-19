@@ -2,6 +2,8 @@
 
 How to build, test and change hivemotion. Read this before editing.
 
+To make a film with hivemotion (not to change it), use the Agent Skills in [skills/](skills/README.md).
+
 ## Build and check
 
 ```bash
