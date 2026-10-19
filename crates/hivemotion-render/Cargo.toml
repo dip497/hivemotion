@@ -1,0 +1,18 @@
+[package]
+name = "hivemotion-render"
+description = "One fframes video that draws any film.yaml: shots with pan and zoom, transitions, captions, slates, end card"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+hivemotion-spec.workspace = true
+hivemotion-ffmpeg.workspace = true
+fframes = { workspace = true, features = ["cpu_renderer", "compile-time-svgtree"] }
+
+[dev-dependencies]
+tempfile.workspace = true
