@@ -1,0 +1,38 @@
+[workspace]
+resolver = "2"
+members = ["crates/*"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/dip497/hivemotion"
+rust-version = "1.85"
+
+[workspace.dependencies]
+hivemotion-spec = { path = "crates/hivemotion-spec" }
+hivemotion-ffmpeg = { path = "crates/hivemotion-ffmpeg" }
+hivemotion-render = { path = "crates/hivemotion-render" }
+hivemotion-audio = { path = "crates/hivemotion-audio" }
+hivemotion-deliver = { path = "crates/hivemotion-deliver" }
+hivemotion-check = { path = "crates/hivemotion-check" }
+
+anyhow = "1"
+clap = { version = "4", features = ["derive"] }
+schemars = "0.8"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serde_yaml = "0.9"
+serde_path_to_error = "0.1"
+thiserror = "2"
+tempfile = "3"
+
+# fframes is pinned to one exact revision. Its GPL features (h264, libav-agree-gpl) stay off,
+# so the binary stays MIT; H.264 deliverables come from the system ffmpeg.
+fframes = { git = "https://github.com/dmtrKovalenko/fframes", rev = "28356c5b5473fc3281167e3b2baff12a0d204a67", default-features = false }
+
+[profile.release]
+debug = false
+
+[profile.dev.package."*"]
+opt-level = 2

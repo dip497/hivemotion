@@ -1,0 +1,6 @@
+/target
+**/build/
+examples/*/takes/
+examples/*/music/
+hosts.local.yaml
+*.local.*

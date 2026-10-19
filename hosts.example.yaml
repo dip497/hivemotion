@@ -1,0 +1,7 @@
+# Copy to hosts.local.yaml (gitignored) to tell agents where heavy builds and renders run.
+# Nothing in the toolkit reads this file; it is a note for people and agents.
+build_machine:
+  ssh: user@build-box          # the machine that runs cargo and renders
+  work_dir: ~/hivemotion-work  # everything (toolchain, target, caches) stays under here
+  nice: 10                     # run heavy jobs at this niceness
+  min_free_memory_gb: 3        # wait until this much memory is free before a render
