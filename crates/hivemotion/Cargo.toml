@@ -1,0 +1,25 @@
+[package]
+name = "hivemotion"
+description = "Make launch films from a film.yaml: validate, prep, render, master, deliver, check"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[[bin]]
+name = "hivemotion"
+path = "src/main.rs"
+
+[dependencies]
+anyhow.workspace = true
+clap.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+hivemotion-spec.workspace = true
+hivemotion-render.workspace = true
+hivemotion-audio.workspace = true
+hivemotion-deliver.workspace = true
+hivemotion-check.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
