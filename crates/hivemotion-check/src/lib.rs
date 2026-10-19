@@ -51,11 +51,15 @@ pub struct CheckReport {
 /// Where the stills go: every beat the aspect keeps, and the middle of every transition.
 pub fn still_times(timeline: &Timeline, plan: &AspectPlan) -> Vec<StillAt> {
     let mut out: Vec<StillAt> = Vec::new();
-    let last = plan.length() - 0.5 / timeline.fps as f64;
+    // a still is taken at the start of a frame: ffmpeg seeking into the middle of a frame skips
+    // it, and past the last frame's start it finds nothing
+    let fps = timeline.fps as f64;
+    let last = plan.length() - 1.0 / fps;
+    let frame_start = |t: f64| ((t * fps + 1e-6).floor() / fps).min(last);
     for (name, at) in &timeline.beats {
         if let Some(r) = plan.render_time(*at) {
             out.push(StillAt {
-                seconds: r.min(last),
+                seconds: frame_start(r),
                 label: name.clone(),
             });
         }
@@ -64,7 +68,7 @@ pub fn still_times(timeline: &Timeline, plan: &AspectPlan) -> Vec<StillAt> {
         if let Some((kind, length)) = shot.transition {
             if let Some(r) = plan.render_time(shot.start + length / 2.0) {
                 out.push(StillAt {
-                    seconds: r,
+                    seconds: frame_start(r),
                     label: format!("{} into {} (middle)", kind.name(), shot.id),
                 });
             }
