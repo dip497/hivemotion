@@ -36,6 +36,24 @@ master and a 45 s vertical cut) and the regression benchmark.
 A shot whose recording is missing renders as a named slate, so a film can be cut, timed and
 checked before every take exists.
 
+A shot can be drawn instead of recorded: a `graphic` is SVG files drawn back to front, each moved
+by keys (position, turn, size, squash, opacity, an ease and an upward `arc` for a throw).
+`examples/fired-ide/` flicks an editor window into a trash can in half a second:
+
+```yaml
+shots:
+  - id: fired
+    from: start
+    graphic:
+      layers:
+        - svg: graphics/editor-window.svg
+          width: 0.62                      # of the frame's shorter side, so it fits every aspect
+          keys:
+            - { at: 0.0, x: 0.5, y: 0.42 }
+            - { at: 0.1, y: 0.45, rotate: -6, squash: 0.9, ease: out-cubic }
+            - { at: 0.44, y: 0.72, rotate: 160, scale: 0.16, squash: 1.0, arc: 0.3 }
+```
+
 ## Quick start
 
 Needs Rust (stable), and `ffmpeg` + `ffprobe` on PATH (any build with libx264).

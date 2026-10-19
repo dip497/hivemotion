@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 600">
   <!-- An editor window, drawn plain: no product's colours or layout. -->
-  <rect x="4" y="4" width="952" height="592" rx="22" fill="#16181b" stroke="#5b6168" stroke-width="4"/>
+  <rect x="4" y="4" width="952" height="592" rx="22" fill="#1a1d21" stroke="#7a8088" stroke-width="4"/>
   <rect x="6" y="6" width="948" height="54" rx="20" fill="#1f2226"/>
   <rect x="6" y="40" width="948" height="20" fill="#1f2226"/>
   <circle cx="40" cy="33" r="8" fill="#4a4f55"/>

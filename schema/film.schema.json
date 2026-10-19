@@ -1,0 +1,731 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "definitions": {
+    "Caption": {
+      "additionalProperties": false,
+      "properties": {
+        "from": {
+          "$ref": "#/definitions/TimeRef"
+        },
+        "lines": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "to": {
+          "$ref": "#/definitions/TimeRef"
+        }
+      },
+      "required": [
+        "from",
+        "lines",
+        "to"
+      ],
+      "type": "object"
+    },
+    "CaptionPlace": {
+      "additionalProperties": false,
+      "description": "Where captions sit, in pixels of this aspect. Give `top` or `bottom`, not both.",
+      "properties": {
+        "bottom": {
+          "format": "double",
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "left": {
+          "format": "double",
+          "type": "number"
+        },
+        "size": {
+          "description": "Font size in pixels.",
+          "format": "double",
+          "type": "number"
+        },
+        "top": {
+          "format": "double",
+          "type": [
+            "number",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "left",
+        "size"
+      ],
+      "type": "object"
+    },
+    "Cutdown": {
+      "additionalProperties": false,
+      "properties": {
+        "from": {
+          "$ref": "#/definitions/TimeRef"
+        },
+        "length": {
+          "description": "Seconds.",
+          "format": "double",
+          "type": "number"
+        },
+        "loop_blend": {
+          "description": "Seconds of the end blended into the start, so the clip loops without a jump.",
+          "format": "double",
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "name": {
+          "type": "string"
+        },
+        "sound": {
+          "default": true,
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "from",
+        "length",
+        "name"
+      ],
+      "type": "object"
+    },
+    "Ease": {
+      "oneOf": [
+        {
+          "enum": [
+            "linear",
+            "in-out"
+          ],
+          "type": "string"
+        },
+        {
+          "description": "Starts fast, settles.",
+          "enum": [
+            "out-cubic"
+          ],
+          "type": "string"
+        },
+        {
+          "description": "Starts slow, speeds up: a fall.",
+          "enum": [
+            "in-cubic"
+          ],
+          "type": "string"
+        }
+      ]
+    },
+    "EndCard": {
+      "additionalProperties": false,
+      "description": "The closing card: the brand mark, its name, one line and a command to copy.",
+      "properties": {
+        "command": {
+          "type": "string"
+        },
+        "from": {
+          "$ref": "#/definitions/TimeRef"
+        },
+        "line": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "command",
+        "from",
+        "line"
+      ],
+      "type": "object"
+    },
+    "Finish": {
+      "additionalProperties": false,
+      "properties": {
+        "fps": {
+          "description": "Frame rate of the delivered files. Below the master's rate, frames are blended in pairs.",
+          "format": "uint32",
+          "minimum": 0.0,
+          "type": "integer"
+        },
+        "poster": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/TimeRef"
+            }
+          ],
+          "description": "The frame shown as the first frame, so every player's thumbnail is a strong one."
+        }
+      },
+      "required": [
+        "fps",
+        "poster"
+      ],
+      "type": "object"
+    },
+    "Framing": {
+      "additionalProperties": false,
+      "properties": {
+        "caption": {
+          "$ref": "#/definitions/CaptionPlace"
+        },
+        "keep": {
+          "default": [],
+          "description": "Parts of the film this aspect keeps, in order. Empty keeps the whole film.",
+          "items": {
+            "$ref": "#/definitions/Span"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "caption"
+      ],
+      "type": "object"
+    },
+    "Graphic": {
+      "additionalProperties": false,
+      "description": "A shot drawn from SVG files, each moved, turned and squashed by keys.",
+      "properties": {
+        "background": {
+          "description": "Colour behind the layers; the brand background when left out.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "layers": {
+          "description": "Drawn in order: the first is at the back.",
+          "items": {
+            "$ref": "#/definitions/Layer"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "layers"
+      ],
+      "type": "object"
+    },
+    "Inset": {
+      "additionalProperties": false,
+      "properties": {
+        "clip": {
+          "type": "string"
+        },
+        "clip_start": {
+          "default": 0.0,
+          "format": "double",
+          "type": "number"
+        },
+        "from": {
+          "$ref": "#/definitions/TimeRef"
+        },
+        "id": {
+          "type": "string"
+        },
+        "to": {
+          "$ref": "#/definitions/TimeRef"
+        }
+      },
+      "required": [
+        "clip",
+        "from",
+        "id",
+        "to"
+      ],
+      "type": "object"
+    },
+    "Key": {
+      "additionalProperties": false,
+      "description": "The pose of a layer at one moment.",
+      "properties": {
+        "arc": {
+          "default": 0.0,
+          "description": "How far the path from the key before bows upward at its middle, as a fraction of the frame height: a throw. 0 is a straight line.",
+          "format": "double",
+          "type": "number"
+        },
+        "at": {
+          "description": "Seconds from the start of the shot.",
+          "format": "double",
+          "type": "number"
+        },
+        "ease": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/Ease"
+            }
+          ],
+          "default": "linear",
+          "description": "The curve of the move from the key before."
+        },
+        "opacity": {
+          "format": "double",
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "rotate": {
+          "description": "Turn in degrees, clockwise.",
+          "format": "double",
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "scale": {
+          "description": "Size; 1 is `width`.",
+          "format": "double",
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "squash": {
+          "description": "1 is the drawing's own shape; 0.8 is 20% flatter and wider to match; 1.2 is taller and narrower. The area stays the same.",
+          "format": "double",
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "x": {
+          "description": "Centre across the frame, 0 (left) to 1 (right).",
+          "format": "double",
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "y": {
+          "description": "Centre down the frame, 0 (top) to 1 (bottom).",
+          "format": "double",
+          "type": [
+            "number",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "at"
+      ],
+      "type": "object"
+    },
+    "Layer": {
+      "additionalProperties": false,
+      "description": "One SVG drawing in a graphic.",
+      "properties": {
+        "keys": {
+          "description": "Where the layer is over time, in time order. Each key keeps what it leaves out from the key before; the first starts from the centre, upright, full size and opaque.",
+          "items": {
+            "$ref": "#/definitions/Key"
+          },
+          "type": "array"
+        },
+        "svg": {
+          "description": "Path of an SVG file, relative to film.yaml. Paths, rectangles, circles, ellipses, lines, polylines and polygons are drawn, with fill, stroke, opacity and group transforms.",
+          "type": "string"
+        },
+        "width": {
+          "description": "Width as a fraction of the frame's shorter side, so one graphic fits every aspect.",
+          "format": "double",
+          "type": "number"
+        }
+      },
+      "required": [
+        "keys",
+        "svg",
+        "width"
+      ],
+      "type": "object"
+    },
+    "Loudness": {
+      "additionalProperties": false,
+      "properties": {
+        "integrated": {
+          "description": "Integrated loudness to aim for, in LUFS.",
+          "format": "double",
+          "type": "number"
+        },
+        "pre_limit": {
+          "description": "Peak limit (linear, 0–1) applied before measuring, so one loud hit does not force the normalizer out of linear mode.",
+          "format": "double",
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "range": {
+          "description": "Loudness range the normalizer may keep, in LU.",
+          "format": "double",
+          "type": "number"
+        },
+        "true_peak": {
+          "description": "True-peak target for the normalizer, in dBTP.",
+          "format": "double",
+          "type": "number"
+        }
+      },
+      "required": [
+        "integrated",
+        "range",
+        "true_peak"
+      ],
+      "type": "object"
+    },
+    "Music": {
+      "additionalProperties": false,
+      "properties": {
+        "fade_in": {
+          "format": "double",
+          "type": "number"
+        },
+        "fade_out": {
+          "format": "double",
+          "type": "number"
+        },
+        "file": {
+          "description": "Path of the track, relative to film.yaml.",
+          "type": "string"
+        },
+        "join": {
+          "description": "Seconds of crossfade where two sections meet.",
+          "format": "double",
+          "type": "number"
+        },
+        "loudness": {
+          "$ref": "#/definitions/Loudness"
+        },
+        "sections": {
+          "description": "Parts of the track, in film order. Each runs until the next one starts.",
+          "items": {
+            "$ref": "#/definitions/MusicSection"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "fade_in",
+        "fade_out",
+        "file",
+        "join",
+        "loudness",
+        "sections"
+      ],
+      "type": "object"
+    },
+    "MusicSection": {
+      "additionalProperties": false,
+      "description": "A part of the track placed on the film by its cues: each cue says which second of the track lands on which beat. All cues of one section must agree.",
+      "properties": {
+        "cues": {
+          "additionalProperties": {
+            "format": "double",
+            "type": "number"
+          },
+          "type": "object"
+        },
+        "from": {
+          "$ref": "#/definitions/TimeRef"
+        }
+      },
+      "required": [
+        "cues",
+        "from"
+      ],
+      "type": "object"
+    },
+    "PanZoom": {
+      "additionalProperties": false,
+      "description": "A slow move from one view of the clip to another over the shot.",
+      "properties": {
+        "end": {
+          "$ref": "#/definitions/View"
+        },
+        "start": {
+          "$ref": "#/definitions/View"
+        }
+      },
+      "required": [
+        "end",
+        "start"
+      ],
+      "type": "object"
+    },
+    "Shot": {
+      "additionalProperties": false,
+      "description": "What fills the frame from `from` until the next shot starts: a recording (`clip`) or a drawn `graphic`, one of the two.",
+      "properties": {
+        "clip": {
+          "description": "Path of the recording, relative to film.yaml. A missing file renders as a named slate.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "clip_start": {
+          "default": 0.0,
+          "description": "Seconds into the recording where the shot begins.",
+          "format": "double",
+          "type": "number"
+        },
+        "ease": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/Ease"
+            }
+          ],
+          "default": "in-out",
+          "description": "The curve of the pan and zoom."
+        },
+        "from": {
+          "$ref": "#/definitions/TimeRef"
+        },
+        "graphic": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Graphic"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Drawings moved by keys, instead of a recording."
+        },
+        "id": {
+          "type": "string"
+        },
+        "pan_zoom": {
+          "additionalProperties": {
+            "$ref": "#/definitions/PanZoom"
+          },
+          "default": {},
+          "description": "Pan and zoom per aspect. An aspect left out shows the clip still, centred, covering the frame.",
+          "type": "object"
+        },
+        "speed": {
+          "default": 1.0,
+          "description": "Playback speed of the recording; 2.0 plays it twice as fast.",
+          "format": "double",
+          "type": "number"
+        },
+        "transition": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Transition"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "How this shot comes in over the one before it."
+        }
+      },
+      "required": [
+        "from",
+        "id"
+      ],
+      "type": "object"
+    },
+    "Span": {
+      "additionalProperties": false,
+      "properties": {
+        "from": {
+          "$ref": "#/definitions/TimeRef"
+        },
+        "to": {
+          "$ref": "#/definitions/TimeRef"
+        }
+      },
+      "required": [
+        "from",
+        "to"
+      ],
+      "type": "object"
+    },
+    "TimeRef": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "pattern": "^[a-z][a-z0-9_]*\\s*([+-]\\s*[0-9]+(\\.[0-9]+)?)?$",
+          "type": "string"
+        }
+      ],
+      "description": "Seconds, a beat name, or a beat name with an offset such as `drop+0.25`"
+    },
+    "Transition": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "$ref": "#/definitions/TransitionKind"
+        },
+        "length": {
+          "description": "Seconds. The shot before keeps playing under this one for this long.",
+          "format": "double",
+          "type": "number"
+        }
+      },
+      "required": [
+        "kind",
+        "length"
+      ],
+      "type": "object"
+    },
+    "TransitionKind": {
+      "oneOf": [
+        {
+          "description": "The new shot grows out of the centre in a hexagon.",
+          "enum": [
+            "hex-wipe"
+          ],
+          "type": "string"
+        },
+        {
+          "description": "The shot before closes into a hexagon at the centre, uncovering the new shot.",
+          "enum": [
+            "hex-iris"
+          ],
+          "type": "string"
+        },
+        {
+          "description": "The new shot fades in over the one before.",
+          "enum": [
+            "cross"
+          ],
+          "type": "string"
+        }
+      ]
+    },
+    "View": {
+      "additionalProperties": false,
+      "description": "`zoom` is the scale of the clip's own pixels (at most 1, so a clip is never blown up past its recording); it grows if needed so the clip always covers the frame. `x` and `y` are the point of the clip, as a fraction of its width and height, held at the centre of the frame.",
+      "properties": {
+        "x": {
+          "format": "double",
+          "type": "number"
+        },
+        "y": {
+          "format": "double",
+          "type": "number"
+        },
+        "zoom": {
+          "format": "double",
+          "type": "number"
+        }
+      },
+      "required": [
+        "x",
+        "y",
+        "zoom"
+      ],
+      "type": "object"
+    }
+  },
+  "description": "One launch film: its beats, the shots and captions placed on them, the music, and the cutdowns.",
+  "properties": {
+    "aspects": {
+      "additionalProperties": {
+        "$ref": "#/definitions/Framing"
+      },
+      "description": "The aspects to render, each with its own framing.",
+      "type": "object"
+    },
+    "beats": {
+      "additionalProperties": {
+        "format": "double",
+        "type": "number"
+      },
+      "description": "Named points in time, in seconds. Every other time in this file points at one of these.",
+      "type": "object"
+    },
+    "brand": {
+      "description": "Path of brand.yaml, relative to this file.",
+      "type": "string"
+    },
+    "captions": {
+      "default": [],
+      "items": {
+        "$ref": "#/definitions/Caption"
+      },
+      "type": "array"
+    },
+    "cutdowns": {
+      "default": [],
+      "description": "Short clips cut out of the 16:9 master.",
+      "items": {
+        "$ref": "#/definitions/Cutdown"
+      },
+      "type": "array"
+    },
+    "end_card": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/EndCard"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "finish": {
+      "$ref": "#/definitions/Finish"
+    },
+    "fps": {
+      "description": "Frames per second of the master render.",
+      "format": "uint32",
+      "minimum": 0.0,
+      "type": "integer"
+    },
+    "insets": {
+      "default": [],
+      "description": "Smaller clips drawn over the shots, such as a phone recording.",
+      "items": {
+        "$ref": "#/definitions/Inset"
+      },
+      "type": "array"
+    },
+    "length": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/TimeRef"
+        }
+      ],
+      "description": "Where the film ends."
+    },
+    "music": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/Music"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "shots": {
+      "items": {
+        "$ref": "#/definitions/Shot"
+      },
+      "type": "array"
+    },
+    "title": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "aspects",
+    "beats",
+    "brand",
+    "finish",
+    "fps",
+    "length",
+    "shots",
+    "title"
+  ],
+  "title": "Film",
+  "type": "object"
+}

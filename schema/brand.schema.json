@@ -1,0 +1,133 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "definitions": {
+    "CaptionStyle": {
+      "additionalProperties": false,
+      "properties": {
+        "line_height": {
+          "description": "Line height as a multiple of the font size.",
+          "format": "double",
+          "type": "number"
+        },
+        "tracking": {
+          "description": "Letter spacing in em.",
+          "format": "double",
+          "type": "number"
+        },
+        "weight": {
+          "format": "uint16",
+          "minimum": 0.0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "line_height",
+        "tracking",
+        "weight"
+      ],
+      "type": "object"
+    },
+    "Colors": {
+      "additionalProperties": false,
+      "description": "Colours as `#rrggbb`.",
+      "properties": {
+        "background": {
+          "type": "string"
+        },
+        "text": {
+          "type": "string"
+        },
+        "text_dim": {
+          "type": "string"
+        },
+        "text_faint": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "background",
+        "text",
+        "text_dim",
+        "text_faint"
+      ],
+      "type": "object"
+    },
+    "Font": {
+      "additionalProperties": false,
+      "properties": {
+        "family": {
+          "type": "string"
+        },
+        "files": {
+          "description": "Font files (TTF or OTF), relative to brand.yaml.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "family",
+        "files"
+      ],
+      "type": "object"
+    },
+    "Fonts": {
+      "additionalProperties": false,
+      "properties": {
+        "mono": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/Font"
+            }
+          ],
+          "description": "Commands and labels."
+        },
+        "sans": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/Font"
+            }
+          ],
+          "description": "Captions and titles."
+        }
+      },
+      "required": [
+        "mono",
+        "sans"
+      ],
+      "type": "object"
+    }
+  },
+  "description": "The look shared by every film of one product.",
+  "properties": {
+    "caption": {
+      "$ref": "#/definitions/CaptionStyle"
+    },
+    "colors": {
+      "$ref": "#/definitions/Colors"
+    },
+    "fonts": {
+      "$ref": "#/definitions/Fonts"
+    },
+    "mark": {
+      "description": "Path of the mark as SVG, relative to brand.yaml.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "name": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "caption",
+    "colors",
+    "fonts",
+    "name"
+  ],
+  "title": "Brand",
+  "type": "object"
+}
