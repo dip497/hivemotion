@@ -1,0 +1,16 @@
+[package]
+name = "hivemotion-deliver"
+description = "Platform files from the master: posters as frame 0, cutdowns from beats, H.264 presets"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+serde.workspace = true
+hivemotion-spec.workspace = true
+hivemotion-ffmpeg.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true

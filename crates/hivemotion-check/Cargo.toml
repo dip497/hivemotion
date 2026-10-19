@@ -1,0 +1,17 @@
+[package]
+name = "hivemotion-check"
+description = "Checks an agent can read: stills at every beat and mid-transition, a contact sheet, caption read time, loudness"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+serde.workspace = true
+hivemotion-spec.workspace = true
+hivemotion-ffmpeg.workspace = true
+hivemotion-audio.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
