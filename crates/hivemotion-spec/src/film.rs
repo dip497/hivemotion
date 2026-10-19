@@ -115,13 +115,16 @@ pub struct Span {
     pub to: TimeRef,
 }
 
-/// A clip that fills the frame from `from` until the next shot starts.
+/// What fills the frame from `from` until the next shot starts: a recording (`clip`) or a
+/// drawn `graphic`, one of the two.
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct Shot {
     pub id: String,
     /// Path of the recording, relative to film.yaml. A missing file renders as a named slate.
-    pub clip: String,
+    pub clip: Option<String>,
+    /// Drawings moved by keys, instead of a recording.
+    pub graphic: Option<Graphic>,
     pub from: TimeRef,
     /// Seconds into the recording where the shot begins.
     #[serde(default)]
@@ -141,6 +144,61 @@ pub struct Shot {
 
 fn one() -> f64 {
     1.0
+}
+
+/// A shot drawn from SVG files, each moved, turned and squashed by keys.
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct Graphic {
+    /// Colour behind the layers; the brand background when left out.
+    pub background: Option<String>,
+    /// Drawn in order: the first is at the back.
+    pub layers: Vec<Layer>,
+}
+
+/// One SVG drawing in a graphic.
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct Layer {
+    /// Path of an SVG file, relative to film.yaml. Paths, rectangles, circles, ellipses, lines,
+    /// polylines and polygons are drawn, with fill, stroke, opacity and group transforms.
+    pub svg: String,
+    /// Width as a fraction of the frame's shorter side, so one graphic fits every aspect.
+    pub width: f64,
+    /// Where the layer is over time, in time order. Each key keeps what it leaves out from the
+    /// key before; the first starts from the centre, upright, full size and opaque.
+    pub keys: Vec<Key>,
+}
+
+/// The pose of a layer at one moment.
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct Key {
+    /// Seconds from the start of the shot.
+    pub at: f64,
+    /// Centre across the frame, 0 (left) to 1 (right).
+    pub x: Option<f64>,
+    /// Centre down the frame, 0 (top) to 1 (bottom).
+    pub y: Option<f64>,
+    /// Turn in degrees, clockwise.
+    pub rotate: Option<f64>,
+    /// Size; 1 is `width`.
+    pub scale: Option<f64>,
+    /// 1 is the drawing's own shape; 0.8 is 20% flatter and wider to match; 1.2 is taller and
+    /// narrower. The area stays the same.
+    pub squash: Option<f64>,
+    pub opacity: Option<f64>,
+    /// How far the path from the key before bows upward at its middle, as a fraction of the
+    /// frame height: a throw. 0 is a straight line.
+    #[serde(default)]
+    pub arc: f64,
+    /// The curve of the move from the key before.
+    #[serde(default = "linear")]
+    pub ease: Ease,
+}
+
+fn linear() -> Ease {
+    Ease::Linear
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -178,7 +236,10 @@ pub enum Ease {
     Linear,
     #[default]
     InOut,
+    /// Starts fast, settles.
     OutCubic,
+    /// Starts slow, speeds up: a fall.
+    InCubic,
 }
 
 impl Ease {
@@ -189,6 +250,7 @@ impl Ease {
             Ease::InOut if x < 0.5 => 4.0 * x * x * x,
             Ease::InOut => 1.0 - (-2.0 * x + 2.0).powi(3) / 2.0,
             Ease::OutCubic => 1.0 - (1.0 - x).powi(3),
+            Ease::InCubic => x * x * x,
         }
     }
 }

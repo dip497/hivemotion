@@ -1,0 +1,56 @@
+# yaml-language-server: $schema=../../schema/film.schema.json
+# A drawn opening: an editor window is flicked into a trash can, then one line lands.
+# No recordings; the graphic shot is SVG layers moved by keys. Reuses the Hivemind brand.
+title: Fired IDE
+brand: ../hivemind-launch/brand.yaml
+fps: 60
+
+beats:
+  start: 0.0
+  line: 0.55   # the window is gone; the line comes in
+  end: 2.0
+
+length: end
+
+aspects:
+  "16:9":
+    caption: { left: 96, bottom: 88, size: 78 }
+  "9:16":
+    caption: { left: 64, top: 150, size: 70 }
+
+shots:
+  - id: fired
+    from: start
+    graphic:
+      layers:
+        # back to front: the inside of the can, the window, the can's body
+        - svg: graphics/trash-can-back.svg
+          width: 0.26
+          keys:
+            - { at: 0.0, x: 0.5, y: 0.74, scale: 0.01 }
+            - { at: 0.14, scale: 1.0, ease: out-cubic }
+            - { at: 0.44 }
+            - { at: 0.48, squash: 0.86 }
+            - { at: 0.56, squash: 1.0, ease: out-cubic }
+        - svg: graphics/editor-window.svg
+          width: 0.62
+          keys:
+            - { at: 0.0, x: 0.5, y: 0.42 }
+            # wind up: a little down, a little turned, flattened
+            - { at: 0.1, y: 0.45, rotate: -6, squash: 0.9, ease: out-cubic }
+            # the throw: up and over into the can, spinning and shrinking
+            - { at: 0.44, y: 0.72, rotate: 160, scale: 0.16, squash: 1.0, arc: 0.3 }
+            - { at: 0.47, y: 0.8, scale: 0.12, opacity: 0, ease: in-cubic }
+        - svg: graphics/trash-can-front.svg
+          width: 0.26
+          keys:
+            - { at: 0.0, x: 0.5, y: 0.74, scale: 0.01 }
+            - { at: 0.14, scale: 1.0, ease: out-cubic }
+            - { at: 0.44 }
+            - { at: 0.48, squash: 0.86 }
+            - { at: 0.56, squash: 1.0, ease: out-cubic }
+
+captions:
+  - { from: line, to: end, lines: ["I fired my IDE."] }
+
+finish: { fps: 30, poster: line+1.0 }

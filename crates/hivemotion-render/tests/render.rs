@@ -186,3 +186,62 @@ fn a_caption_too_wide_for_the_vertical_frame_is_shrunk_to_fit() {
     );
 }
 
+#[test]
+fn a_graphic_layer_is_where_its_keys_put_it_and_bows_up_on_an_arc() {
+    // a red square thrown from the left third to the right third, bowing up 0.2 of the height
+    let dir = tempfile::tempdir().unwrap();
+    copy_example(dir.path(), |f| f);
+    std::fs::write(
+        dir.path().join("square.svg"),
+        r##"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><rect width="10" height="10" fill="#ff0000"/></svg>"##,
+    )
+    .unwrap();
+    std::fs::write(
+        dir.path().join("film.yaml"),
+        r##"
+title: Throw
+brand: brand.yaml
+fps: 60
+beats: { start: 0.0, end: 2.0 }
+length: end
+aspects:
+  "16:9":
+    caption: { left: 96, bottom: 88, size: 78 }
+shots:
+  - id: throw
+    from: start
+    graphic:
+      background: "#000000"
+      layers:
+        - svg: square.svg
+          width: 0.1
+          keys:
+            - { at: 0.0, x: 0.25, y: 0.5 }
+            - { at: 1.0, x: 0.75, arc: 0.2 }
+finish: { fps: 30, poster: start }
+"##,
+    )
+    .unwrap();
+    let p = project(dir.path());
+    let r = render_stills(
+        &p,
+        Aspect::Landscape,
+        &[0.0, 0.5, 1.5],
+        &dir.path().join("s"),
+    )
+    .unwrap();
+    let red = |still: usize, x: u32, y: u32| {
+        let c = pixel(&r.stills[still].file, x, y);
+        c[0] > 200 && c[1] < 60 && c[2] < 60
+    };
+    assert!(red(0, 480, 540) && !red(0, 1440, 540), "start: left third");
+    // halfway: centre across, and 0.2 × 1080 = 216 px above the straight line
+    assert!(
+        red(1, 960, 324) && !red(1, 960, 540),
+        "middle: up on the arc"
+    );
+    assert!(
+        red(2, 1440, 540) && !red(2, 480, 540),
+        "after the last key: held at the right"
+    );
+}

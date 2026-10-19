@@ -6,6 +6,7 @@ use std::path::{Path, PathBuf};
 
 use anyhow::{bail, Context, Result};
 use hivemotion_ffmpeg::{ffmpeg, probe, secs};
+use hivemotion_spec::timeline::Picture;
 use hivemotion_spec::Project;
 use serde::Serialize;
 
@@ -64,9 +65,13 @@ pub fn prep(project: &Project) -> Result<PrepReport> {
     let mut wants: Vec<Want> = t
         .shots
         .iter()
-        .map(|s| Want {
+        .filter_map(|s| match &s.picture {
+            Picture::Clip(clip) => Some((s, clip)),
+            Picture::Graphic(_) => None,
+        })
+        .map(|(s, clip)| Want {
             id: s.id.clone(),
-            source: s.clip.clone(),
+            source: clip.clone(),
             clip_start: s.clip_start,
             speed: s.speed,
             seconds: s.end + s.tail - s.start + 0.25,

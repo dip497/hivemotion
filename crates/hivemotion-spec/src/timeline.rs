@@ -6,7 +6,9 @@ use std::path::{Path, PathBuf};
 use serde::Serialize;
 
 use crate::brand::{is_hex_color, Brand};
-use crate::film::{Aspect, CaptionPlace, Ease, Film, Loudness, PanZoom, TransitionKind, View};
+use crate::film::{
+    Aspect, CaptionPlace, Ease, Film, Graphic, Loudness, PanZoom, TransitionKind, View,
+};
 use crate::time::{is_beat_name, resolve, Beats, TimeRef};
 use crate::SpecError;
 
@@ -40,7 +42,7 @@ pub struct AspectPlan {
 #[derive(Debug, Clone, Serialize)]
 pub struct TimedShot {
     pub id: String,
-    pub clip: PathBuf,
+    pub picture: Picture,
     pub start: f64,
     /// When the next shot starts (or the film ends).
     pub end: f64,
@@ -51,6 +53,158 @@ pub struct TimedShot {
     pub transition: Option<(TransitionKind, f64)>,
     pub ease: Ease,
     pub pan_zoom: BTreeMap<Aspect, PanZoom>,
+}
+
+/// What a shot shows.
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum Picture {
+    /// A recording, by its path.
+    Clip(PathBuf),
+    Graphic(TimedGraphic),
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct TimedGraphic {
+    pub background: Option<String>,
+    pub layers: Vec<TimedLayer>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct TimedLayer {
+    pub svg: PathBuf,
+    pub width: f64,
+    /// Every key with every value filled in, in time order; never empty.
+    pub poses: Vec<Pose>,
+}
+
+/// A layer's full pose at `at` seconds from the shot's start, and how it moved there.
+#[derive(Debug, Clone, Copy, PartialEq, Serialize)]
+pub struct Pose {
+    pub at: f64,
+    pub x: f64,
+    pub y: f64,
+    pub rotate: f64,
+    pub scale: f64,
+    pub squash: f64,
+    pub opacity: f64,
+    pub arc: f64,
+    pub ease: Ease,
+}
+
+impl TimedLayer {
+    /// The pose `t` seconds into the shot: held before the first key and after the last.
+    pub fn pose_at(&self, t: f64) -> Pose {
+        let p = &self.poses;
+        let Some(i) = p.iter().position(|k| k.at > t) else {
+            return *p.last().expect("a layer has keys");
+        };
+        if i == 0 {
+            return p[0];
+        }
+        let (a, b) = (p[i - 1], p[i]);
+        let u = b.ease.apply((t - a.at) / (b.at - a.at));
+        let mix = |x: f64, y: f64| x + (y - x) * u;
+        Pose {
+            at: t,
+            x: mix(a.x, b.x),
+            // a throw: the straight path bowed up by `arc` at its middle
+            y: mix(a.y, b.y) - b.arc * 4.0 * u * (1.0 - u),
+            rotate: mix(a.rotate, b.rotate),
+            scale: mix(a.scale, b.scale),
+            squash: mix(a.squash, b.squash),
+            opacity: mix(a.opacity, b.opacity),
+            arc: b.arc,
+            ease: b.ease,
+        }
+    }
+}
+
+/// False for zero, negatives and NaN.
+fn above_zero(x: f64) -> bool {
+    x > 0.0
+}
+
+fn check_graphic(e: &mut Errors, dir: &Path, path: &str, graphic: &Graphic) -> TimedGraphic {
+    if let Some(c) = &graphic.background {
+        if !is_hex_color(c) {
+            e.add(
+                format!("{path}.background"),
+                format!("'{c}' is not a #rrggbb colour"),
+            );
+        }
+    }
+    if graphic.layers.is_empty() {
+        e.add(
+            format!("{path}.layers"),
+            "a graphic needs at least one layer",
+        );
+    }
+    let mut layers = Vec::new();
+    for (j, layer) in graphic.layers.iter().enumerate() {
+        let lp = format!("{path}.layers[{j}]");
+        let svg = dir.join(&layer.svg);
+        if !svg.is_file() {
+            e.add(format!("{lp}.svg"), format!("no file at {}", svg.display()));
+        }
+        if !above_zero(layer.width) {
+            e.add(format!("{lp}.width"), "must be above 0");
+        }
+        if layer.keys.is_empty() {
+            e.add(format!("{lp}.keys"), "a layer needs at least one key");
+        }
+        let mut poses: Vec<Pose> = Vec::new();
+        for (k, key) in layer.keys.iter().enumerate() {
+            let kp = format!("{lp}.keys[{k}]");
+            let before = poses.last().copied().unwrap_or(Pose {
+                at: f64::NEG_INFINITY,
+                x: 0.5,
+                y: 0.5,
+                rotate: 0.0,
+                scale: 1.0,
+                squash: 1.0,
+                opacity: 1.0,
+                arc: 0.0,
+                ease: Ease::Linear,
+            });
+            if !(key.at.is_finite() && key.at >= 0.0 && key.at > before.at) {
+                e.add(
+                    format!("{kp}.at"),
+                    format!("{} s must be 0 or more and after the key before", key.at),
+                );
+            }
+            let pose = Pose {
+                at: key.at,
+                x: key.x.unwrap_or(before.x),
+                y: key.y.unwrap_or(before.y),
+                rotate: key.rotate.unwrap_or(before.rotate),
+                scale: key.scale.unwrap_or(before.scale),
+                squash: key.squash.unwrap_or(before.squash),
+                opacity: key.opacity.unwrap_or(before.opacity),
+                arc: key.arc,
+                ease: key.ease,
+            };
+            if !above_zero(pose.scale) {
+                e.add(format!("{kp}.scale"), "must be above 0");
+            }
+            if !above_zero(pose.squash) {
+                e.add(format!("{kp}.squash"), "must be above 0");
+            }
+            if !(0.0..=1.0).contains(&pose.opacity) {
+                e.add(format!("{kp}.opacity"), "must be 0 to 1");
+            }
+            poses.push(pose);
+        }
+        layers.push(TimedLayer {
+            svg,
+            width: layer.width,
+            poses,
+        });
+    }
+    TimedGraphic {
+        background: graphic.background.clone(),
+        layers,
+    }
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -363,8 +517,21 @@ pub fn build(film: &Film, dir: &Path) -> Result<Timeline, Vec<SpecError>> {
                 ),
             );
         }
-        if shot.clip.trim().is_empty() {
-            e.add(format!("{path}.clip"), "name the recording for this shot");
+        match (&shot.clip, &shot.graphic) {
+            (Some(clip), None) if clip.trim().is_empty() => {
+                e.add(format!("{path}.clip"), "name the recording for this shot")
+            }
+            (Some(_), None) => {}
+            (None, Some(_)) => {
+                if shot.clip_start != 0.0 || shot.speed != 1.0 || !shot.pan_zoom.is_empty() {
+                    e.add(
+                        path.clone(),
+                        "clip_start, speed and pan_zoom move a recording; a graphic moves by its keys",
+                    );
+                }
+            }
+            (Some(_), Some(_)) => e.add(path.clone(), "give a clip or a graphic, not both"),
+            (None, None) => e.add(path.clone(), "give a clip (a recording) or a graphic"),
         }
         let start = e.time(beats, &format!("{path}.from"), &shot.from);
         if let Some(prev) = starts.last() {
@@ -426,9 +593,18 @@ pub fn build(film: &Film, dir: &Path) -> Result<Timeline, Vec<SpecError>> {
                 );
             }
         }
+        let picture = match &shot.graphic {
+            Some(g) => Picture::Graphic(check_graphic(
+                &mut e,
+                dir,
+                &format!("shots[{i}].graphic"),
+                g,
+            )),
+            None => Picture::Clip(dir.join(shot.clip.as_deref().unwrap_or_default())),
+        };
         shots.push(TimedShot {
             id: shot.id.clone(),
-            clip: dir.join(&shot.clip),
+            picture,
             start,
             end,
             tail: next_transition,

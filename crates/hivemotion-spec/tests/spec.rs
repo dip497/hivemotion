@@ -1,5 +1,6 @@
 use std::path::{Path, PathBuf};
 
+use hivemotion_spec::timeline::Picture;
 use hivemotion_spec::{load, Aspect};
 
 fn example() -> PathBuf {
@@ -120,4 +121,44 @@ fn a_caption_crossing_the_vertical_cut_ends_at_the_cut() {
     assert!((widgets.end - 35.85).abs() < 1e-9, "{}", widgets.end);
     // the caption that starts inside the cut-out part is not shown at all
     assert!(!shown.iter().any(|c| c.lines[0].starts_with("Everything")));
+}
+
+#[test]
+fn the_fired_ide_graphic_validates_and_its_window_lands_in_the_can() {
+    let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../examples/fired-ide/film.yaml");
+    let project = load(&path).unwrap();
+    let Picture::Graphic(g) = &project.timeline.shots[0].picture else {
+        panic!("the first shot is a graphic");
+    };
+    let window = &g.layers[1];
+    let can = &g.layers[2];
+    let (thrown, landed) = (window.pose_at(0.3), window.pose_at(0.44));
+    assert!(thrown.y < 0.42, "the throw goes up first: {thrown:?}");
+    assert!((landed.x - can.pose_at(0.44).x).abs() < 1e-9);
+    assert!(landed.y > 0.65, "{landed:?}");
+}
+
+#[test]
+fn graphic_keys_out_of_time_order_name_the_key() {
+    let dir = tempfile::tempdir().unwrap();
+    let src = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../examples/fired-ide");
+    std::fs::create_dir_all(dir.path().join("graphics")).unwrap();
+    for f in std::fs::read_dir(src.join("graphics")).unwrap() {
+        let f = f.unwrap();
+        std::fs::copy(f.path(), dir.path().join("graphics").join(f.file_name())).unwrap();
+    }
+    let film = std::fs::read_to_string(src.join("film.yaml"))
+        .unwrap()
+        .replace(
+            "../hivemind-launch/brand.yaml",
+            &example().join("brand.yaml").display().to_string(),
+        )
+        .replace("{ at: 0.47, y: 0.8,", "{ at: 0.4, y: 0.8,");
+    std::fs::write(dir.path().join("film.yaml"), film).unwrap();
+    let err = load(&dir.path().join("film.yaml")).unwrap_err();
+    assert_eq!(
+        err.errors()[0].path,
+        "shots[0].graphic.layers[1].keys[3].at",
+        "{err}"
+    );
 }

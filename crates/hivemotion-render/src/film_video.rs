@@ -1,8 +1,9 @@
 //! The one fframes `Video` that draws any film: it reads the resolved timeline at run time, so a
 //! changed film.yaml needs no recompile.
 
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::f64::consts::PI;
+use std::path::PathBuf;
 
 use fframes::media::{FrameConvertOptions, ResizeVideoFrame};
 use fframes::{
@@ -10,10 +11,12 @@ use fframes::{
     SyncVideoFrameInput,
 };
 use hivemotion_spec::film::{Aspect, TransitionKind};
-use hivemotion_spec::timeline::{caption_motion, AspectPlan, TimedCaption, TimedShot, Timeline};
+use hivemotion_spec::timeline::{
+    caption_motion, AspectPlan, Picture, TimedCaption, TimedGraphic, TimedShot, Timeline,
+};
 
+use crate::drawing::Drawing;
 use crate::fonts::FontMetrics;
-use crate::mark::Mark;
 
 pub(crate) fn seg(t: f64, a: f64, b: f64) -> f64 {
     if b <= a {
@@ -111,7 +114,9 @@ pub struct FilmVideo<'p, const W: usize, const H: usize, const FPS: usize> {
     pub timeline: &'p Timeline,
     pub plan: &'p AspectPlan,
     pub look: Look,
-    pub mark: Option<Mark>,
+    pub mark: Option<Drawing>,
+    /// The drawings of every graphic layer, by file.
+    pub drawings: HashMap<PathBuf, Drawing>,
     /// Shots and insets with a prepared clip, by id.
     pub clips: HashSet<String>,
     pub captions: Vec<CaptionLayout>,
@@ -320,6 +325,43 @@ impl<'p, const W: usize, const H: usize, const FPS: usize> FilmVideo<'p, W, H, F
         )
     }
 
+    /// A graphic `t` seconds into its shot: its background, then each layer at its pose.
+    fn graphic<'a>(&'a self, g: &TimedGraphic, t: f64) -> Svgr<'a> {
+        let (w, h) = (self.w(), self.h());
+        let background = g
+            .background
+            .clone()
+            .unwrap_or_else(|| self.look.background.clone());
+        let layers: Vec<Svgr<'a>> = g
+            .layers
+            .iter()
+            .filter_map(|layer| {
+                let d = self.drawings.get(&layer.svg)?;
+                let p = layer.pose_at(t);
+                let size = layer.width * w.min(h) / d.view_width * p.scale;
+                // squash keeps the area: flatter is wider
+                let (sx, sy) = (size / p.squash.sqrt(), size * p.squash.sqrt());
+                let place = format!(
+                    "translate({:.3},{:.3}) rotate({:.3}) scale({:.5},{:.5}) translate({:.3},{:.3})",
+                    p.x * w,
+                    p.y * h,
+                    p.rotate,
+                    sx,
+                    sy,
+                    -d.view_x - d.view_width / 2.0,
+                    -d.view_y - d.view_height / 2.0
+                );
+                Some(fframes::svgr!(<g transform={place} opacity={p.opacity}>{d.draw()}</g>))
+            })
+            .collect();
+        fframes::svgr!(
+            <g>
+                <rect x="0" y="0" width={w} height={h} fill={background} />
+                {layers}
+            </g>
+        )
+    }
+
     fn take_label(shot_clip: &std::path::Path) -> String {
         let stem = shot_clip
             .file_stem()
@@ -338,8 +380,12 @@ impl<'p, const W: usize, const H: usize, const FPS: usize> FilmVideo<'p, W, H, F
         delta: f64,
     ) -> Svgr<'a> {
         let (w, h) = (self.w(), self.h());
+        let clip = match &shot.picture {
+            Picture::Graphic(g) => return self.graphic(g, t - shot.start),
+            Picture::Clip(clip) => clip,
+        };
         if !self.clips.contains(&shot.id) {
-            return self.slate(Self::take_label(&shot.clip), 0.0, 0.0, w, h);
+            return self.slate(Self::take_label(clip), 0.0, 0.0, w, h);
         }
         let input = SyncVideoFrameInput {
             start_from: (shot.start - delta + 1e-4).max(0.0) as f32,
@@ -554,12 +600,7 @@ impl<'p, const W: usize, const H: usize, const FPS: usize> FilmVideo<'p, W, H, F
                 let x = w / 2.0 - m.view_width * scale / 2.0 - m.view_x * scale;
                 let y = card.mark_top - m.view_y * scale;
                 let place = format!("translate({x:.2},{y:.2}) scale({scale:.5})");
-                let paths: Vec<Svgr<'a>> = m
-                    .paths
-                    .iter()
-                    .map(|p| fframes::svgr!(<path d={p.d.as_str()} fill={p.fill.as_str()} opacity={p.opacity} />))
-                    .collect();
-                fframes::svgr!(<g transform={place} opacity={out_cubic(seg(tr, s, s + 0.45))}>{paths}</g>)
+                fframes::svgr!(<g transform={place} opacity={out_cubic(seg(tr, s, s + 0.45))}>{m.draw()}</g>)
             }
             None => Svgr::empty(),
         };

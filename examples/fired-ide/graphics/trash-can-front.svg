@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 360">
+  <!-- The body and front rim of the can: drawn in front of whatever falls in. -->
+  <path d="M22 70 A128 26 0 0 0 278 70 L252 336 Q250 354 230 354 L70 354 Q50 354 48 336 Z" fill="#2b2f34" stroke="#6b7178" stroke-width="6" stroke-linejoin="round"/>
+  <g stroke="#4c5258" stroke-width="8" stroke-linecap="round">
+    <line x1="100" y1="128" x2="108" y2="312"/>
+    <line x1="150" y1="130" x2="150" y2="314"/>
+    <line x1="200" y1="128" x2="192" y2="312"/>
+  </g>
+</svg>

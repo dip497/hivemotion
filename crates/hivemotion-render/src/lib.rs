@@ -4,12 +4,12 @@
 //! The master is ProRes 4444 (yuv444p10le) tagged BT.709, with no sound; mastering adds the sound.
 //! fframes is built without its GPL features, so H.264 never comes from this crate.
 
+pub mod drawing;
 pub mod film_video;
 pub mod fonts;
-pub mod mark;
 pub mod prep;
 
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 use std::time::Instant;
 
@@ -17,12 +17,13 @@ use anyhow::{anyhow, bail, Context, Result};
 use fframes::ffmpeg_sys_fframes::AVPixelFormat;
 use fframes::{EncoderOptions, MediaDirectory, RenderOptions, YuvMatrix};
 use hivemotion_spec::film::Aspect;
+use hivemotion_spec::timeline::Picture;
 use hivemotion_spec::Project;
 use serde::Serialize;
 
+use drawing::Drawing;
 use film_video::{layout, FilmVideo, Look, TextFonts};
 use fonts::pick;
-use mark::Mark;
 
 pub use prep::{prep, PrepReport};
 
@@ -69,7 +70,8 @@ enum Done {
 
 struct Inputs {
     look: Look,
-    mark: Option<Mark>,
+    mark: Option<Drawing>,
+    drawings: HashMap<PathBuf, Drawing>,
     clips: HashSet<String>,
     missing: Vec<String>,
     media: PathBuf,
@@ -86,10 +88,22 @@ fn inputs(project: &Project) -> Result<Inputs> {
     let mut clips = HashSet::new();
     let t = &project.timeline;
     let mut missing = Vec::new();
-    for (id, source) in t
-        .shots
-        .iter()
-        .map(|s| (&s.id, &s.clip))
+    let mut drawings = HashMap::new();
+    let mut takes = Vec::new();
+    for shot in &t.shots {
+        match &shot.picture {
+            Picture::Clip(clip) => takes.push((&shot.id, clip)),
+            Picture::Graphic(g) => {
+                for layer in &g.layers {
+                    if !drawings.contains_key(&layer.svg) {
+                        drawings.insert(layer.svg.clone(), Drawing::load(&layer.svg)?);
+                    }
+                }
+            }
+        }
+    }
+    for (id, source) in takes
+        .into_iter()
         .chain(t.insets.iter().map(|i| (&i.id, &i.clip)))
     {
         if media.join(format!("{id}.mp4")).is_file() {
@@ -111,7 +125,8 @@ fn inputs(project: &Project) -> Result<Inputs> {
             caption_tracking: b.caption.tracking,
             caption_line_height: b.caption.line_height,
         },
-        mark: project.mark_file().map(|m| Mark::load(&m)).transpose()?,
+        mark: project.mark_file().map(|m| Drawing::load(&m)).transpose()?,
+        drawings,
         clips,
         missing,
         media,
@@ -152,6 +167,7 @@ fn run<const W: usize, const H: usize, const FPS: usize>(
         plan,
         look: inputs.look.clone(),
         mark: inputs.mark.clone(),
+        drawings: inputs.drawings.clone(),
         clips: inputs.clips.clone(),
         captions,
         end_card,
