@@ -1,0 +1,158 @@
+# yaml-language-server: $schema=../../schema/film.schema.json
+# The Hivemind launch film (70 s master, 45 s vertical), ported from its first hand-made cut.
+# Recordings live in takes/ and the track in music/; neither is in git. A missing take renders
+# as a named slate, so the film can be cut before every take exists.
+title: Hivemind launch
+brand: brand.yaml
+fps: 60
+
+beats:
+  start: 0.0
+  board: 2.0
+  ask: 8.0
+  drop: 10.0          # the track's drop
+  live: 13.0
+  dog: 22.0
+  parade: 25.2
+  living: 28.6
+  widget: 32.0
+  vertical_cut: 35.85 # the vertical cut jumps from here to `ending`
+  tool: 40.0
+  fanout: 44.0
+  sdk: 48.4
+  iris: 51.65         # the last shot closes into the hive
+  second_drop: 52.3
+  phone_in: 54.2
+  phone_out: 58.6
+  ending: 60.85       # the track's ending section starts here
+  hit: 61.9           # the final hit; the end card lands on it
+  end: 70.0
+
+length: end
+
+aspects:
+  "16:9":
+    caption: { left: 96, bottom: 88, size: 78 }
+  "9:16":
+    caption: { left: 64, top: 150, size: 70 }
+    keep:
+      - { from: start, to: vertical_cut }
+      - { from: ending, to: end }
+
+shots:
+  - id: hook
+    clip: takes/I1-hook.mp4
+    from: start
+    ease: out-cubic
+    pan_zoom:
+      "16:9": { start: { zoom: 0.62, x: 0.5, y: 0.5 }, end: { zoom: 0.7, x: 0.5, y: 0.48 } }
+      "9:16": { start: { zoom: 0.96, x: 0.5, y: 0.5 }, end: { zoom: 1.0, x: 0.5, y: 0.5 } }
+  - id: board
+    clip: takes/W1-board.mp4
+    from: board
+    transition: { kind: hex-wipe, length: 0.45 }
+    pan_zoom:
+      "16:9": { start: { zoom: 0.75, x: 0.5, y: 0.5 }, end: { zoom: 0.6, x: 0.5, y: 0.5 } }
+      "9:16": { start: { zoom: 1.0, x: 0.45, y: 0.5 }, end: { zoom: 0.96, x: 0.5, y: 0.5 } }
+  - id: ask
+    clip: takes/I1-ask.mp4
+    from: ask
+    transition: { kind: hex-wipe, length: 0.45 }
+    pan_zoom:
+      "16:9": { start: { zoom: 0.8, x: 0.3, y: 0.55 }, end: { zoom: 0.62, x: 0.5, y: 0.5 } }
+      "9:16": { start: { zoom: 1.0, x: 0.3, y: 0.5 }, end: { zoom: 0.96, x: 0.5, y: 0.5 } }
+  - id: live
+    clip: takes/I2-live.mp4
+    from: live
+    pan_zoom:
+      "16:9": { start: { zoom: 0.62, x: 0.5, y: 0.5 }, end: { zoom: 0.72, x: 0.5, y: 0.5 } }
+      "9:16": { start: { zoom: 0.96, x: 0.5, y: 0.5 }, end: { zoom: 1.0, x: 0.5, y: 0.5 } }
+  - id: dog
+    clip: takes/opening-dog.mp4
+    from: dog
+    transition: { kind: hex-wipe, length: 0.45 }
+    pan_zoom:
+      "16:9": { start: { zoom: 0.6, x: 0.5, y: 0.5 }, end: { zoom: 0.64, x: 0.5, y: 0.5 } }
+      "9:16": { start: { zoom: 0.96, x: 0.5, y: 0.5 }, end: { zoom: 1.0, x: 0.5, y: 0.5 } }
+  - id: parade
+    clip: takes/opening-parade.mp4
+    from: parade
+    pan_zoom:
+      "16:9": { start: { zoom: 0.6, x: 0.5, y: 0.5 }, end: { zoom: 0.64, x: 0.5, y: 0.5 } }
+      "9:16": { start: { zoom: 0.96, x: 0.5, y: 0.5 }, end: { zoom: 1.0, x: 0.5, y: 0.5 } }
+  - id: living
+    clip: takes/opening-living.mp4
+    from: living
+    pan_zoom:
+      "16:9": { start: { zoom: 0.64, x: 0.5, y: 0.5 }, end: { zoom: 0.6, x: 0.5, y: 0.5 } }
+      "9:16": { start: { zoom: 1.0, x: 0.5, y: 0.5 }, end: { zoom: 0.96, x: 0.5, y: 0.5 } }
+  - id: widget
+    clip: takes/W2-widget.mp4
+    from: widget
+    transition: { kind: hex-wipe, length: 0.45 }
+    pan_zoom:
+      "16:9": { start: { zoom: 0.6, x: 0.5, y: 0.5 }, end: { zoom: 0.8, x: 0.7, y: 0.3 } }
+      "9:16": { start: { zoom: 0.96, x: 0.6, y: 0.5 }, end: { zoom: 1.0, x: 0.7, y: 0.4 } }
+  - id: tool
+    clip: takes/W3-tool.mp4
+    from: tool
+    pan_zoom:
+      "16:9": { start: { zoom: 0.75, x: 0.5, y: 0.5 }, end: { zoom: 0.85, x: 0.5, y: 0.5 } }
+      "9:16": { start: { zoom: 1.0, x: 0.5, y: 0.5 }, end: { zoom: 1.0, x: 0.5, y: 0.5 } }
+  - id: fanout
+    clip: takes/W4-fanout.mp4
+    from: fanout
+    transition: { kind: hex-wipe, length: 0.45 }
+    pan_zoom:
+      "16:9": { start: { zoom: 0.62, x: 0.5, y: 0.5 }, end: { zoom: 0.7, x: 0.5, y: 0.5 } }
+      "9:16": { start: { zoom: 0.96, x: 0.5, y: 0.5 }, end: { zoom: 1.0, x: 0.5, y: 0.5 } }
+  - id: sdk
+    clip: takes/W5-sdk.mp4
+    from: sdk
+    pan_zoom:
+      "16:9": { start: { zoom: 0.7, x: 0.5, y: 0.5 }, end: { zoom: 0.62, x: 0.5, y: 0.5 } }
+      "9:16": { start: { zoom: 1.0, x: 0.5, y: 0.5 }, end: { zoom: 0.96, x: 0.5, y: 0.5 } }
+  # The hive (3D) is rendered once elsewhere and comes in as a recording.
+  - id: hive
+    clip: takes/hive-ending.mp4
+    from: iris
+    transition: { kind: hex-iris, length: 0.65 }
+
+captions:
+  - { from: start+0.25, to: board-0.05, lines: ["My agents built this screen."] }
+  - { from: board+0.3, to: ask-0.3, lines: ["Every coding agent.", "One board."] }
+  - { from: ask+0.3, to: live+0.6, lines: ["Ask for a view.", "It writes it."] }
+  - { from: live+1.0, to: dog-0.4, lines: ["The terminals", "are still live."] }
+  - { from: dog+0.4, to: widget-0.4, lines: ["Your board. Your agents", "keep making it yours."] }
+  - { from: widget+0.4, to: fanout-0.4, lines: ["Widgets and tools,", "written while you work."] }
+  - { from: fanout+0.4, to: iris-0.25, lines: ["Everything you can click,", "an agent can call."] }
+  - { from: second_drop+0.3, to: ending-0.05, lines: ["Your machines. Your phone.", "Not our cloud."] }
+
+insets:
+  - { id: phone, clip: takes/W6-phone.mp4, from: phone_in, to: phone_out+0.4 }
+
+end_card:
+  from: hit
+  line: Open source. Local. No account.
+  command: bash <(curl -fsSL https://hivemind.griiken.com/install.sh)
+
+music:
+  file: music/cyberpunk-music-601089.mp3
+  sections:
+    - from: start
+      cues: { drop: 28.10, second_drop: 70.40 }
+    - from: ending
+      cues: { hit: 153.80 }
+  join: 0.03
+  fade_in: 0.08
+  fade_out: 1.0
+  loudness: { integrated: -14, true_peak: -2.5, range: 14, pre_limit: 0.6 }
+
+finish:
+  fps: 30
+  poster: board+1.6
+
+cutdowns:
+  - { name: island-clip, from: ask, length: 12 }
+  - { name: widget-api-clip, from: widget, length: 15 }
+  - { name: its-yours-loop, from: dog+0.6, length: 8, loop_blend: 0.6, sound: false }

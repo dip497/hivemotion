@@ -1,0 +1,19 @@
+# yaml-language-server: $schema=../../schema/brand.schema.json
+name: Hivemind
+colors:
+  background: "#040506"
+  text: "#f4f5f6"
+  text_dim: "#c4c8cd"
+  text_faint: "#8d939a"
+fonts:
+  sans:
+    family: Geist
+    files: [fonts/Geist-500.ttf, fonts/Geist-700.ttf]
+  mono:
+    family: JetBrains Mono
+    files: [fonts/JetBrainsMono-500.ttf, fonts/JetBrainsMono-700.ttf]
+mark: mark.svg
+caption:
+  weight: 700
+  tracking: -0.04
+  line_height: 0.98
