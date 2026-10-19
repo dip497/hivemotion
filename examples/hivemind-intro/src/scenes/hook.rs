@@ -111,7 +111,7 @@ impl Scene for FiredScene {
         let exit = expo_in(prog(lb, 6.6, 7.0));
         fframes::svgr!(
             <g opacity={1.0 - exit}>
-                {ground(&frame, 0.72, 0.5, 0.32, 0.18)}
+                {ground(&frame, 0.18)}
                 {window}
                 <g transform={can_t} opacity={prog(lb, 2.4, 2.6)}>{body}{lid}</g>
                 <g transform={format!("translate(0 {})", -exit * 90.0)}>
@@ -139,7 +139,7 @@ impl Scene for HiveScene {
         let exit = expo_in(prog(lb, 6.65, 7.0));
         fframes::svgr!(
             <g opacity={1.0 - exit}>
-                {ground(&frame, 0.7, 0.45, 0.36, 0.3)}
+                {ground(&frame, 0.3)}
                 <g transform={format!("translate({} 0)", (1.0 - enter) * 160.0)} opacity={enter}>
                     {framed_clip(&frame, ctx, "hive.mp4", 0.0, x, y, w, h, "THE CANVAS · RECORDED IN THE APP".to_owned())}
                 </g>

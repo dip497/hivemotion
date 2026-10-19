@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
-# Cuts the recordings into the clips the scenes play and gathers the stills, the music, the voice
+# Cuts the recordings into the clips the scenes play and gathers the stills, the voice, the music
 # and the sound effects into takes/. Run from the project folder:
-#   FILM=<folder with takes/workspace-60 and island-look> MUSIC=<track.mp3> scripts/prep.sh
+#   FILM=<folder with takes/workspace-60 and island-look> scripts/prep.sh
 set -euo pipefail
 : "${FILM:?FILM is the folder with takes/workspace-60 and island-look}"
-: "${MUSIC:?MUSIC is the soundtrack mp3}"
 out=takes
 mkdir -p "$out"
 ws="$FILM/takes/workspace-60"
@@ -33,6 +32,8 @@ cut "$ws/W3-tool.mp4"   2200:1238:820:380 1920:1080 tool.mp4   0.3:3.2:1
 for still in wide close; do
   ffmpeg -v error -y -i "$FILM/island-look/after-$still.png" -vf scale=2400:-1:flags=lanczos -q:v 2 "$out/island-$still.jpg"
 done
-cp "$MUSIC" "$out/music.mp3"
+python3 scripts/music.py "$out/calm-dry.wav"
+# a little room around the pad and the plucks
+ffmpeg -v error -y -i "$out/calm-dry.wav" -af "aecho=0.8:0.6:67|131|197:0.3|0.22|0.15,lowpass=f=5200,highpass=f=60" "$out/calm.wav"
 cp voice/vo_*.mp3 "$out/"
 bash scripts/sfx.sh "$out"

@@ -54,17 +54,15 @@ pub const VOICE: &[(&str, f32)] = &[
 ];
 
 /// Effects on the actions they belong to: (file, beat, gain).
-const EFFECTS: &[(&str, f32, f32)] = &[
-    ("whoosh.wav", 3.3, -14.0),
-    ("thud.wav", 4.55, -11.0),
-    ("tick.wav", 7.07, -16.0),
-    ("tick.wav", 8.7, -16.0),
-    ("tick.wav", 10.7, -16.0),
-    ("tick.wav", 12.7, -16.0),
-    ("rise.wav", 34.9, -15.0),
-    ("chime.wav", 46.2, -16.0),
-    ("thud.wav", 56.0, -14.0),
-];
+const EFFECTS: &[(&str, f32, f32)] = &[("thud.wav", 4.55, -16.0), ("chime.wav", 46.2, -18.0)];
+
+/// The calm bed's level, set so it sits about 8 dB under the voice between lines.
+const MUSIC_GAIN_DB: f32 = -9.0;
+
+/// `INTRO_MUSIC=0` leaves the music out: the voice and the two effects only.
+fn with_music() -> bool {
+    std::env::var("INTRO_MUSIC").map_or(true, |v| v != "0")
+}
 
 impl Video for IntroVideo {
     const FPS: usize = FPS;
@@ -77,19 +75,15 @@ impl Video for IntroVideo {
     }
 
     fn audio(&self) -> AudioMap<'_> {
-        let duck = Ducking { depth_db: -9.0, ..Default::default() };
-        let mut tracks = vec![
-            AudioTrack::new("music.mp3", Second(0.0)..Second(beat_time(ENDING_FROM)))
-                .offset(MUSIC_INTRO_AT)
-                .gain_db(-6.0)
-                .fade_out(0.04)
-                .duck(duck),
-            AudioTrack::new("music.mp3", Second(beat_time(ENDING_FROM))..Second(TOTAL_SECONDS))
-                .offset(MUSIC_ENDING_AT)
-                .gain_db(-6.0)
-                .fade_out(2.2)
-                .duck(duck),
-        ];
+        let mut tracks = Vec::new();
+        if with_music() {
+            tracks.push(
+                AudioTrack::new("calm.wav", Second(0.0)..Second(TOTAL_SECONDS))
+                    .gain_db(MUSIC_GAIN_DB)
+                    .fade_out(beat_time(TOTAL_BEATS - ENDING_FROM))
+                    .duck(Ducking { depth_db: -5.0, ..Default::default() }),
+            );
+        }
         tracks.extend(VOICE.iter().map(|(file, at)| AudioTrack::new(*file, Second(beat_time(*at))..Eof).voice()));
         tracks.extend(EFFECTS.iter().map(|(file, at, gain)| AudioTrack::new(*file, Second(beat_time(*at))..Eof).gain_db(*gain)));
         AudioMap::from(tracks)
@@ -152,25 +146,15 @@ fn hud(frame: &Frame, b: f32) -> Svgr<'static> {
     )
 }
 
-/// Where the drums play: the picture breathes with the kick.
-const PUMPING: &[(f32, f32)] = &[(32.0, 56.0)];
 /// Cuts that tear for three frames.
 const GLITCH_CUTS: &[f32] = &[7.0, 14.0, 22.0, 28.0, 41.0, 50.0];
-/// Drops that flash.
-const DROPS: &[f32] = &[32.0, 56.0];
 
 fn energy<'a>(frame: &Frame, ctx: &FFramesContext<'a, '_>, b: f32) -> Svgr<'a> {
-    let pumping = PUMPING.iter().any(|(s, e)| (*s..*e).contains(&b));
-    let s = 1.0 + if pumping { pulse(b, 9.0) * 0.006 } else { 0.0 };
-    let flash = DROPS
-        .iter()
-        .map(|d| if b >= *d { (-(b - d) * 7.0).exp() } else { 0.0 })
-        .fold(0.0_f32, f32::max);
     let since_cut = GLITCH_CUTS
         .iter()
         .map(|c| (b - c) * BEAT * FPS as f32)
         .find(|f| *f >= 0.0 && *f < 3.0);
-    let scene = if let Some(f) = since_cut {
+    if let Some(f) = since_cut {
         let bands: Vec<Svgr> = (0..6)
             .map(|i| {
                 let y = i as f32 * 180.0;
@@ -188,11 +172,5 @@ fn energy<'a>(frame: &Frame, ctx: &FFramesContext<'a, '_>, b: f32) -> Svgr<'a> {
         fframes::svgr!(<g>{bands}</g>)
     } else {
         ctx.render_scenes(frame)
-    };
-    fframes::svgr!(
-        <g>
-            <g transform={format!("translate(960 540) scale({s}) translate(-960 -540)")}>{scene}</g>
-            <rect width="1920" height="1080" fill={HONEY} opacity={flash * 0.35} />
-        </g>
-    )
+    }
 }

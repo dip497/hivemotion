@@ -19,7 +19,6 @@ impl Scene for OutroScene {
         let lb = Self::lb(&frame);
         let t_end = TOTAL_SECONDS - gsec(&frame);
         let fade_out = prog(1.6 - t_end, 0.0, 1.6);
-        let flash = (-lb * 9.0).exp();
 
         // the three cells of the mark fly in from three sides and lock on the downbeat
         let size = 260.0;
@@ -40,7 +39,7 @@ impl Scene for OutroScene {
         let url = prog(lb, 7.0, 7.4);
         fframes::svgr!(
             <g>
-                {ground(&frame, 0.5, 0.25, 0.25 + 0.5 * (1.0 - expo_out(prog(lb, 0.0, 6.0))), 0.22)}
+                {ground(&frame, 0.15)}
                 <g opacity={1.0 - fade_out}>
                     {cell(0.0, -500.0, TOP, HONEY, 1.0)}
                     {cell(-700.0, 300.0, LEFT, BONE, 0.45)}
@@ -58,7 +57,6 @@ impl Scene for OutroScene {
                         <text x="960" y="880" text-anchor="middle" font-family={MONO} font-weight="700" font-size="30" letter-spacing="3" fill={HONEY}>"HIVEMIND.GRIIKEN.COM"</text>
                     </g>
                 </g>
-                <rect width="1920" height="1080" fill={HONEY} opacity={flash * 0.6} />
                 <rect width="1920" height="1080" fill="#000000" opacity={fade_out} />
             </g>
         )

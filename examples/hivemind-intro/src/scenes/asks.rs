@@ -168,7 +168,7 @@ impl Scene for ViewScene {
         let exit = expo_in(prog(lb, 7.7, 8.0));
         fframes::svgr!(
             <g opacity={1.0 - exit}>
-                {ground(&frame, 0.4, 0.5, 0.3, 0.12)}
+                {ground(&frame, 0.12)}
                 {if l >= 0.0 { wide } else { Svgr::empty() }}
                 {close}
                 {if l >= 0.0 { gradients("view") } else { Svgr::empty() }}

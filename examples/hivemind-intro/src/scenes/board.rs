@@ -67,7 +67,7 @@ impl Scene for BoardScene {
             .collect();
         fframes::svgr!(
             <g opacity={1.0 - exit}>
-                {ground(&frame, 0.66, 0.5, 0.28, 0.1)}
+                {ground(&frame, 0.1)}
                 {Slam::new(146.0, 200.0, heading.0, 92.0, heading.1).draw(heading_l, 0.0, 60.0)}
                 <g transform={format!("translate(0 {})", (1.0 - enter) * 40.0)} opacity={prog(l, 0.0, 0.1)}>
                     <text x="146" y="560" font-family={MONO} font-weight="700" font-size="72" fill={BONE}>{agent}</text>
