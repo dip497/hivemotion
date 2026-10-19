@@ -1,0 +1,31 @@
+[package]
+name = "hivemind-intro"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+publish = false
+description = "The Hivemind intro video, drawn in code with fframes on one beat grid"
+
+# The same fframes revision as the hivemotion crates. No GPL features: the picture is encoded to
+# ProRes here and to H.264 by the system ffmpeg (scripts/finish.sh).
+[dependencies]
+fframes = { git = "https://github.com/dmtrKovalenko/fframes", rev = "28356c5b5473fc3281167e3b2baff12a0d204a67", features = ["compile-time-svgtree", "cli"] }
+fframes_skia_renderer = { git = "https://github.com/dmtrKovalenko/fframes", rev = "28356c5b5473fc3281167e3b2baff12a0d204a67", features = ["vulkan", "cli"] }
+
+[lib]
+name = "hivemind_intro"
+path = "src/lib.rs"
+doctest = false
+
+[[bin]]
+name = "hivemind-intro"
+path = "src/main.rs"
+
+# Not a member of the hivemotion workspace: it builds on its own.
+[workspace]
+
+[profile.dev]
+opt-level = 1
+
+[profile.dev.package."*"]
+opt-level = 3
