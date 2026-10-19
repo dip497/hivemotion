@@ -1,0 +1,181 @@
+# yaml-language-server: $schema=../../schema/film.schema.json
+# The Hivemind launch film (about 58 s, 16:9). Opens on the fired-ide graphic, then real footage
+# of the app. Recordings live in takes/ and the track in music/; neither is in git.
+title: Hivemind launch film
+brand: ../hivemind-launch/brand.yaml
+fps: 60
+
+beats:
+  start: 0.0
+  hired: 1.85         # "Hired a hive."
+  board: 1.2          # tiles drop in
+  ask: 6.6            # an agent is asked for a view
+  drop: 10.0          # the track's drop: the islands are up
+  trick: 13.5         # into an island, type into its live terminal
+  build: 17.2         # the turn runs; the frame stays on the island
+  dog: 22.0
+  parade: 24.5
+  alive: 27.0
+  widget: 29.5
+  tool: 36.0
+  fanout: 39.5
+  sdk: 44.5
+  iris: 49.5          # the last shot closes into the islands
+  ending: 51.95       # the track's ending section starts here
+  hit: 53.0           # the final hit; the end card lands on it
+  end: 58.5
+
+length: end
+
+aspects:
+  "16:9":
+    caption: { left: 96, bottom: 88, size: 78 }
+
+shots:
+  - id: fired
+    from: start
+    graphic:
+      layers:
+        - svg: ../fired-ide/graphics/trash-can-back.svg
+          width: 0.26
+          keys:
+            - { at: 0.0, x: 0.5, y: 0.74, scale: 0.01 }
+            - { at: 0.14, scale: 1.0, ease: out-cubic }
+            - { at: 0.44 }
+            - { at: 0.48, squash: 0.86 }
+            - { at: 0.56, squash: 1.0, ease: out-cubic }
+        - svg: ../fired-ide/graphics/editor-window.svg
+          width: 0.62
+          keys:
+            - { at: 0.0, x: 0.5, y: 0.42 }
+            - { at: 0.1, y: 0.45, rotate: -6, squash: 0.9, ease: out-cubic }
+            - { at: 0.44, y: 0.72, rotate: 160, scale: 0.16, squash: 1.0, arc: 0.3 }
+            - { at: 0.47, y: 0.8, scale: 0.12, opacity: 0, ease: in-cubic }
+        - svg: ../fired-ide/graphics/trash-can-front.svg
+          width: 0.26
+          keys:
+            - { at: 0.0, x: 0.5, y: 0.74, scale: 0.01 }
+            - { at: 0.14, scale: 1.0, ease: out-cubic }
+            - { at: 0.44 }
+            - { at: 0.48, squash: 0.86 }
+            - { at: 0.56, squash: 1.0, ease: out-cubic }
+  # W1: tiles drop in one by one (tiles at 1.7, 6.77, 11.83, 15.55 s of the take; at 3x)
+  - id: board
+    clip: takes/W1-board.mp4
+    from: board
+    clip_start: 1.2
+    speed: 3.0
+    transition: { kind: hex-wipe, length: 0.35 }
+    pan_zoom:
+      "16:9": { start: { zoom: 0.62, x: 0.5, y: 0.5 }, end: { zoom: 0.68, x: 0.55, y: 0.5 } }
+  # I1: Enter at 4.23 s of the take, then the islands rise
+  - id: ask
+    clip: takes/I1-hook.mp4
+    from: ask
+    clip_start: 3.0
+    transition: { kind: hex-wipe, length: 0.45 }
+    ease: out-cubic
+    pan_zoom:
+      "16:9": { start: { zoom: 0.8, x: 0.4, y: 0.78 }, end: { zoom: 0.6, x: 0.5, y: 0.5 } }
+  # I2 first part: into payments-api and type into the codex terminal (docked on the right)
+  - id: trick
+    clip: takes/I2-trick.mp4
+    from: trick
+    clip_start: 2.0
+    speed: 1.2
+    transition: { kind: hex-wipe, length: 0.45 }
+    pan_zoom:
+      "16:9": { start: { zoom: 0.6, x: 0.5, y: 0.5 }, end: { zoom: 0.66, x: 0.62, y: 0.55 } }
+  # I2 second part: the turn runs and finishes (fireworks at 10.88 s of the take); the terminal
+  # repeats its prompt here, so the frame stays on the island
+  - id: build
+    clip: takes/I2-trick.mp4
+    from: build
+    clip_start: 7.4
+    pan_zoom:
+      "16:9": { start: { zoom: 0.9, x: 0.28, y: 0.55 }, end: { zoom: 1.0, x: 0.3, y: 0.55 } }
+  - id: dog
+    clip: takes/opening-16x9-dog.mkv
+    from: dog
+    transition: { kind: hex-wipe, length: 0.45 }
+  - id: parade
+    clip: takes/opening-16x9-parade.mkv
+    from: parade
+  - id: alive
+    clip: takes/opening-16x9-alive.mkv
+    from: alive
+  # W2: the CI light widget is written, installed and shows the result
+  - id: widget
+    clip: takes/W2-widget.mp4
+    from: widget
+    clip_start: 1.6
+    speed: 2.0
+    transition: { kind: hex-wipe, length: 0.45 }
+    pan_zoom:
+      "16:9": { start: { zoom: 0.62, x: 0.5, y: 0.5 }, end: { zoom: 0.72, x: 0.5, y: 0.5 } }
+  - id: tool
+    clip: takes/W3-tool.mp4
+    from: tool
+    clip_start: 1.0
+    speed: 3.0
+    pan_zoom:
+      "16:9": { start: { zoom: 0.66, x: 0.5, y: 0.5 }, end: { zoom: 0.74, x: 0.5, y: 0.5 } }
+  - id: fanout
+    clip: takes/W4-fanout.mp4
+    from: fanout
+    clip_start: 1.4
+    speed: 3.0
+    transition: { kind: hex-wipe, length: 0.45 }
+    pan_zoom:
+      "16:9": { start: { zoom: 0.62, x: 0.5, y: 0.5 }, end: { zoom: 0.68, x: 0.5, y: 0.5 } }
+  - id: sdk
+    clip: takes/W5-sdk.mp4
+    from: sdk
+    clip_start: 1.4
+    speed: 3.0
+    pan_zoom:
+      "16:9": { start: { zoom: 0.68, x: 0.5, y: 0.5 }, end: { zoom: 0.62, x: 0.5, y: 0.5 } }
+  # I3: every island, every agent working; a turn finishes at 3.5 s of the take
+  - id: hive
+    clip: takes/I3-wide.mp4
+    from: iris
+    clip_start: 1.0
+    transition: { kind: hex-iris, length: 0.65 }
+    pan_zoom:
+      "16:9": { start: { zoom: 0.62, x: 0.5, y: 0.5 }, end: { zoom: 0.7, x: 0.5, y: 0.5 } }
+
+captions:
+  - { from: start+0.15, to: start+1.65, lines: ["I fired my IDE."] }
+  - { from: hired, to: board+2.1, lines: ["Hired a hive."] }
+  - { from: board+2.3, to: ask-0.3, lines: ["Every coding agent.", "One board."] }
+  - { from: ask+0.4, to: drop+0.6, lines: ["Ask for a view.", "It writes it."] }
+  - { from: trick+0.3, to: build-0.2, lines: ["The terminals", "are still live."] }
+  - { from: dog+0.4, to: widget-0.4, lines: ["Your board. Your agents", "keep making it yours."] }
+  - { from: widget+0.5, to: fanout-0.4, lines: ["Widgets and tools,", "written while you work."] }
+  - { from: fanout+0.5, to: iris-0.3, lines: ["Everything you can click,", "an agent can call."] }
+
+end_card:
+  from: hit
+  line: Open source. Local. No account.
+  command: bash <(curl -fsSL https://hivemind.griiken.com/install.sh)
+
+music:
+  file: music/cyberpunk-music-601089.mp3
+  sections:
+    - from: start
+      cues: { drop: 28.10 }
+    - from: ending
+      cues: { hit: 153.80 }
+  join: 0.03
+  fade_in: 0.08
+  fade_out: 1.0
+  loudness: { integrated: -14, true_peak: -2.5, range: 14, pre_limit: 0.6 }
+
+finish:
+  fps: 30
+  poster: drop+1.0
+
+cutdowns:
+  - { name: island-clip, from: ask, length: 12 }
+  - { name: widget-api-clip, from: widget, length: 15 }
+  - { name: its-yours-loop, from: dog+0.4, length: 8, loop_blend: 0.6, sound: false }
