@@ -1,4 +1,4 @@
-//! The silent bar with the install line typed, then the mark and the end card.
+//! The end card: the mark locks together, the name, the line the voice says, how to install.
 
 use fframes::{Duration, FFramesContext, Frame, Scene, Svgr};
 
@@ -6,35 +6,9 @@ use crate::beat::*;
 use crate::shaders::ground;
 use crate::ui::*;
 
-beat_scene!(SilentScene, SILENCE_FROM, ENDING_FROM);
 beat_scene!(OutroScene, ENDING_FROM, TOTAL_BEATS);
 
 pub const INSTALL: &str = "bash <(curl -fsSL https://hivemind.griiken.com/install.sh)";
-
-impl Scene for SilentScene {
-    fn duration(&self) -> Duration<'_> {
-        Self::frames()
-    }
-
-    fn render_frame<'a>(&'a self, frame: Frame, _ctx: &FFramesContext<'a, '_>) -> Svgr<'a> {
-        let lb = Self::lb(&frame);
-        let n = INSTALL.chars().count() as f32;
-        let typed = (prog(lb, 0.15, 3.3) * n) as usize;
-        let shown: String = INSTALL.chars().take(typed).collect();
-        let adv = 34.0 * 0.6;
-        let x0 = 960.0 - (n + 2.0) * adv / 2.0;
-        let caret_x = x0 + (2.0 + typed as f32) * adv;
-        let caret_on = (typed as f32) < n || (lb * 2.0).fract() > 0.5;
-        fframes::svgr!(
-            <g>
-                <rect width="1920" height="1080" fill="#060707" />
-                <text x={x0} y="552" font-family={MONO} font-weight="700" font-size="34" fill={HONEY}>"$"</text>
-                <text x={x0 + 2.0 * adv} y="552" font-family={MONO} font-weight="500" font-size="34" fill={BONE}>{shown}</text>
-                <rect x={caret_x + 2.0} y="524" width="18" height="38" fill={HONEY} opacity={if caret_on { 1.0 } else { 0.0 }} />
-            </g>
-        )
-    }
-}
 
 impl Scene for OutroScene {
     fn duration(&self) -> Duration<'_> {
@@ -61,9 +35,9 @@ impl Scene for OutroScene {
         const RIGHT: &str = "M16.68 11.30 Q17.54 10.80 18.40 11.30 L22.05 13.40 Q22.91 13.90 22.91 14.89 L22.91 19.11 Q22.91 20.10 22.05 20.60 L18.40 22.70 Q17.54 23.20 16.68 22.70 L13.03 20.60 Q12.17 20.10 12.17 19.11 L12.17 14.89 Q12.17 13.90 13.03 13.40 Z";
 
         let word = snap(lb - 1.0);
-        let tag = prog(lb, 2.5, 3.0);
-        let cmd = snap(lb - 4.0);
-        let url = prog(lb, 6.0, 6.5);
+        let tag = prog(lb, 1.0, 1.4);
+        let cmd = snap(lb - 5.5);
+        let url = prog(lb, 7.0, 7.4);
         fframes::svgr!(
             <g>
                 {ground(&frame, 0.5, 0.25, 0.25 + 0.5 * (1.0 - expo_out(prog(lb, 0.0, 6.0))), 0.22)}
@@ -75,14 +49,13 @@ impl Scene for OutroScene {
                         <text x="960" y="560" text-anchor="middle" font-family={SANS} font-weight="800" font-size="168" letter-spacing="-7" fill={BONE}>"hivemind"</text>
                     </g>
                     <text x="960" y="630" text-anchor="middle" font-family={MONO} font-weight="500" font-size="28" letter-spacing="1" fill={FG2} opacity={tag}>"your agents build the workspace they work in"</text>
-                    <g opacity={prog(lb, 4.0, 4.1)} transform={format!("translate(0 {})", (1.0 - cmd) * 30.0)}>
+                    <g opacity={prog(lb, 5.5, 5.6)} transform={format!("translate(0 {})", (1.0 - cmd) * 30.0)}>
                         <rect x="400" y="716" width="1120" height="68" fill={SURFACE} fill-opacity="0.92" stroke={LINE2} stroke-width="1.5" />
                         <text x="430" y="760" font-family={MONO} font-weight="700" font-size="25" fill={HONEY}>"$"</text>
                         <text x="460" y="760" font-family={MONO} font-weight="500" font-size="25" fill={BONE}>{INSTALL}</text>
                     </g>
                     <g opacity={url}>
-                        <text x="960" y="868" text-anchor="middle" font-family={MONO} font-weight="700" font-size="30" letter-spacing="3" fill={HONEY}>"HIVEMIND.GRIIKEN.COM"</text>
-                        <text x="960" y="912" text-anchor="middle" font-family={MONO} font-weight="500" font-size="20" letter-spacing="4" fill={GREY}>"OPEN SOURCE · LOCAL · NO ACCOUNT"</text>
+                        <text x="960" y="880" text-anchor="middle" font-family={MONO} font-weight="700" font-size="30" letter-spacing="3" fill={HONEY}>"HIVEMIND.GRIIKEN.COM"</text>
                     </g>
                 </g>
                 <rect width="1920" height="1080" fill={HONEY} opacity={flash * 0.6} />

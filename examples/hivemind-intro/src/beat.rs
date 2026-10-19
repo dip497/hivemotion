@@ -1,6 +1,6 @@
 //! The musical clock. The soundtrack is an edit of a 136 BPM track cut on its bar lines, so the
 //! whole video sits on one beat grid: every scene starts on a downbeat and motion is written in
-//! beats. The video's beat 0 is the track's bar 9.
+//! beats. The video's beat 0 is the track's bar 9, so its drop lands on beat 32.
 
 use fframes::Frame;
 
@@ -8,15 +8,14 @@ pub const FPS: usize = 60;
 /// One beat of the soundtrack, in seconds (136 BPM, measured over the whole track).
 pub const BEAT: f32 = 60.0 / 136.0;
 /// The last beat of the video: the end card rings out over the track's decay.
-pub const TOTAL_BEATS: f32 = 166.0;
+pub const TOTAL_BEATS: f32 = 72.0;
 pub const TOTAL_SECONDS: f32 = TOTAL_BEATS * BEAT;
 
 /// Where the two music sections start in the track (its downbeats of bar 9 and bar 88).
 pub const MUSIC_INTRO_AT: f32 = 14.3627;
 pub const MUSIC_ENDING_AT: f32 = 153.775;
-/// The beat the first section stops on (a bar of silence follows) and the end card starts on.
-pub const SILENCE_FROM: f32 = 140.0;
-pub const ENDING_FROM: f32 = 144.0;
+/// The beat the end card and the track's ending start on.
+pub const ENDING_FROM: f32 = 56.0;
 
 pub fn beat_time(beat: f32) -> f32 {
     beat * BEAT

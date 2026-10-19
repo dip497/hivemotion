@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Renders the ProRes master and prints the wall-clock seconds, the number src/facts.rs shows.
+# Renders the ProRes master and prints the wall-clock seconds.
 set -euo pipefail
 mkdir -p build
 cargo build --release

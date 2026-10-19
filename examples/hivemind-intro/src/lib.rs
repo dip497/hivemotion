@@ -1,15 +1,14 @@
-//! The Hivemind intro: about 73 seconds drawn in code on the beat grid of its soundtrack.
+//! The Hivemind intro: about 32 seconds, voiced, drawn in code on the beat grid of its soundtrack.
 //! `cargo run --release -- timeline` lists the scenes with their seconds.
 
 pub mod beat;
-pub mod facts;
 pub mod scenes;
 pub mod shaders;
 pub mod ui;
 
 use fframes::{
-    AudioMap, AudioTimestamp::*, AudioTrack, Color, Duration, FFramesContext, Frame, Scene, Scenes,
-    ShaderUniforms, Svgr, Video, include_media_dir,
+    AudioMap, AudioTimestamp::*, AudioTrack, Color, Ducking, Duration, FFramesContext, Frame, Scene,
+    Scenes, ShaderUniforms, Svgr, Video, include_media_dir,
 };
 
 use beat::*;
@@ -25,7 +24,7 @@ pub const HEIGHT: usize = 1080;
 #[derive(Debug)]
 pub struct IntroVideo;
 
-/// The cut clips, the music, the commit log and the stills: made by scripts/prep.sh, not in git.
+/// The cut clips, the stills, the music, the voice and the effects: made by scripts/prep.sh, not in git.
 pub fn takes_dir() -> std::path::PathBuf {
     std::env::var_os("INTRO_TAKES")
         .map(std::path::PathBuf::from)
@@ -35,17 +34,36 @@ pub fn takes_dir() -> std::path::PathBuf {
 /// The section in the bottom-right corner, by the beat it starts on.
 const SECTIONS: &[(f32, &str)] = &[
     (0.0, "00 / HOOK"),
-    (8.0, "01 / PROMPT"),
-    (16.0, "02 / ORIGIN"),
-    (32.0, "03 / CANVAS"),
-    (48.0, "04 / VIEWS"),
-    (68.0, "05 / WIDGETS"),
-    (84.0, "06 / TOOLS"),
-    (88.0, "07 / API"),
-    (104.0, "08 / ANYWHERE"),
-    (112.0, "09 / PLUGINS"),
-    (120.0, "10 / THIS VIDEO"),
-    (144.0, "11 / HIVEMIND"),
+    (14.0, "01 / THE BOARD"),
+    (28.0, "02 / ASK"),
+    (56.0, "03 / HIVEMIND"),
+];
+
+/// Each voice line and the beat it starts on (voice/script.tsv has the words).
+pub const VOICE: &[(&str, f32)] = &[
+    ("vo_01.mp3", 0.45),
+    ("vo_02.mp3", 7.5),
+    // "on one board" lands on the wide shot at beat 22
+    ("vo_03.mp3", 16.8),
+    // "I ask" lands at beat 30.9, a beat before the drop
+    ("vo_04.mp3", 27.5),
+    ("vo_05.mp3", 35.0),
+    ("vo_06.mp3", 46.2),
+    ("vo_07.mp3", 50.75),
+    ("vo_08.mp3", 57.0),
+];
+
+/// Effects on the actions they belong to: (file, beat, gain).
+const EFFECTS: &[(&str, f32, f32)] = &[
+    ("whoosh.wav", 3.3, -14.0),
+    ("thud.wav", 4.55, -11.0),
+    ("tick.wav", 7.07, -16.0),
+    ("tick.wav", 8.7, -16.0),
+    ("tick.wav", 10.7, -16.0),
+    ("tick.wav", 12.7, -16.0),
+    ("rise.wav", 34.9, -15.0),
+    ("chime.wav", 46.2, -16.0),
+    ("thud.wav", 56.0, -14.0),
 ];
 
 impl Video for IntroVideo {
@@ -59,34 +77,33 @@ impl Video for IntroVideo {
     }
 
     fn audio(&self) -> AudioMap<'_> {
-        AudioMap::from([
-            AudioTrack::new("music.mp3", Second(0.0)..Second(beat_time(SILENCE_FROM)))
+        let duck = Ducking { depth_db: -9.0, ..Default::default() };
+        let mut tracks = vec![
+            AudioTrack::new("music.mp3", Second(0.0)..Second(beat_time(ENDING_FROM)))
                 .offset(MUSIC_INTRO_AT)
-                .fade_out(0.04),
+                .gain_db(-6.0)
+                .fade_out(0.04)
+                .duck(duck),
             AudioTrack::new("music.mp3", Second(beat_time(ENDING_FROM))..Second(TOTAL_SECONDS))
                 .offset(MUSIC_ENDING_AT)
-                .fade_out(2.2),
-        ])
+                .gain_db(-6.0)
+                .fade_out(2.2)
+                .duck(duck),
+        ];
+        tracks.extend(VOICE.iter().map(|(file, at)| AudioTrack::new(*file, Second(beat_time(*at))..Eof).voice()));
+        tracks.extend(EFFECTS.iter().map(|(file, at, gain)| AudioTrack::new(*file, Second(beat_time(*at))..Eof).gain_db(*gain)));
+        AudioMap::from(tracks)
     }
 
     fn define_scenes(&self) -> Scenes<'_> {
         Scenes::from(vec![
             &FiredScene as &dyn Scene,
             &HiveScene,
-            &PromptScene,
-            &OriginScene,
-            &CanvasScene,
+            &BoardScene,
             &AskScene,
-            &IslandScene,
+            &ViewScene,
             &WidgetScene,
             &ToolScene,
-            &ApiScene,
-            &FanoutScene,
-            &AnywhereScene,
-            &PluginsScene,
-            &LoopScene,
-            &RenderScene,
-            &SilentScene,
             &OutroScene,
         ])
     }
@@ -109,8 +126,8 @@ impl Video for IntroVideo {
 }
 
 fn hud(frame: &Frame, b: f32) -> Svgr<'static> {
-    // the HUD sits out the silent bar and the first beat of the end card
-    if (SILENCE_FROM..ENDING_FROM + 1.0).contains(&b) {
+    // the HUD sits out the widget (it covers the light) and the first beat of the end card
+    if (41.0..50.0).contains(&b) || (ENDING_FROM..ENDING_FROM + 1.0).contains(&b) {
         return Svgr::empty();
     }
     let appear = prog(gsec(frame), 0.15, 0.6);
@@ -136,11 +153,11 @@ fn hud(frame: &Frame, b: f32) -> Svgr<'static> {
 }
 
 /// Where the drums play: the picture breathes with the kick.
-const PUMPING: &[(f32, f32)] = &[(32.0, 96.0), (132.0, 140.0), (144.0, 152.0)];
+const PUMPING: &[(f32, f32)] = &[(32.0, 56.0)];
 /// Cuts that tear for three frames.
-const GLITCH_CUTS: &[f32] = &[4.0, 8.0, 16.0, 48.0, 52.0, 68.0, 84.0, 88.0, 104.0, 112.0, 120.0];
+const GLITCH_CUTS: &[f32] = &[7.0, 14.0, 22.0, 28.0, 41.0, 50.0];
 /// Drops that flash.
-const DROPS: &[f32] = &[32.0, 132.0, 144.0];
+const DROPS: &[f32] = &[32.0, 56.0];
 
 fn energy<'a>(frame: &Frame, ctx: &FFramesContext<'a, '_>, b: f32) -> Svgr<'a> {
     let pumping = PUMPING.iter().any(|(s, e)| (*s..*e).contains(&b));

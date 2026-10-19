@@ -1,5 +1,5 @@
-//! The hook. "I FIRED MY IDE." while an editor window is struck through and flicked off the
-//! screen, then "HIRED A HIVE." as the cells of a hive snap together.
+//! The hook. "I FIRED MY IDE." while an editor window is struck through and flicked into the
+//! trash, then "HIRED A HIVE." as agent tiles land on the canvas.
 
 use fframes::{Duration, FFramesContext, Frame, Scene, Svgr};
 
@@ -7,8 +7,8 @@ use crate::beat::*;
 use crate::shaders::ground;
 use crate::ui::*;
 
-beat_scene!(FiredScene, 0.0, 4.0);
-beat_scene!(HiveScene, 4.0, 8.0);
+beat_scene!(FiredScene, 0.0, 7.0);
+beat_scene!(HiveScene, 7.0, 14.0);
 
 /// A plain editor window: tab row, file list, line numbers, code as grey bars. No product.
 fn editor() -> Svgr<'static> {
@@ -50,6 +50,34 @@ fn editor() -> Svgr<'static> {
     )
 }
 
+/// Where the trash can stands: the middle of its mouth.
+const BIN: (f32, f32) = (1640.0, 760.0);
+
+/// A plain trash can in line art; the lid swings open by `lid` degrees.
+fn trash(lid: f32) -> (Svgr<'static>, Svgr<'static>) {
+    let (bx, by) = BIN;
+    let body = format!("M{} {by} L{} {by} L{} {} L{} {} Z", bx - 78.0, bx + 78.0, bx + 62.0, by + 190.0, bx - 62.0, by + 190.0);
+    let stripes: Vec<Svgr> = [-30.0, 0.0, 30.0]
+        .iter()
+        .map(|dx| fframes::svgr!(<rect x={bx + dx - 1.5} y={by + 34.0} width="3" height="122" rx="1.5" fill={LINE2} />))
+        .collect();
+    let lid_t = format!("rotate({} {} {})", -lid, bx + 86.0, by - 8.0);
+    (
+        fframes::svgr!(
+            <g>
+                <path d={body} fill="#121315" stroke={GREY} stroke-width="3" stroke-linejoin="round" />
+                {stripes}
+            </g>
+        ),
+        fframes::svgr!(
+            <g transform={lid_t}>
+                <rect x={bx - 88.0} y={by - 22.0} width="176" height="16" rx="5" fill="#121315" stroke={GREY} stroke-width="3" />
+                <rect x={bx - 22.0} y={by - 36.0} width="44" height="14" rx="4" fill="none" stroke={GREY} stroke-width="3" />
+            </g>
+        ),
+    )
+}
+
 impl Scene for FiredScene {
     fn duration(&self) -> Duration<'_> {
         Self::frames()
@@ -57,28 +85,38 @@ impl Scene for FiredScene {
 
     fn render_frame<'a>(&'a self, frame: Frame, _ctx: &FFramesContext<'a, '_>) -> Svgr<'a> {
         let lb = Self::lb(&frame);
-        // the window is there on the first frame, then thrown off with a quarter turn
-        let throw = prog(lb, 2.3, 3.3);
-        let fly = expo_in(throw);
-        let (wx, wy) = (1190.0 + fly * 820.0, 330.0 - (throw * std::f32::consts::PI).sin() * 160.0 + fly * 420.0);
-        let rot = fly * 38.0 + (1.0 - snap(lb)) * -4.0;
-        let ws = 1.0 - fly * 0.35 + (1.0 - snap(lb)) * 0.06;
+        // the window is there on the first frame, then flicked in an arc into the trash
+        let throw = prog(lb, 3.4, 4.55);
+        let fly = cubic_in_out(throw);
+        let (x0, y0) = (1470.0, 470.0);
+        let (x1, y1) = (BIN.0, BIN.1 + 60.0);
+        let wx = lerp(x0, x1, fly);
+        let wy = lerp(y0, y1, fly) - (throw * std::f32::consts::PI).sin() * 230.0;
+        let rot = fly * 34.0 + (1.0 - snap(lb)) * -4.0;
+        let ws = lerp(1.0, 0.16, expo_in(throw)) + (1.0 - snap(lb)) * 0.06;
         let window = fframes::svgr!(
-            <g transform={format!("translate({} {}) rotate({rot}) scale({ws}) translate(-280 -210)", wx + 280.0, wy + 210.0)}
-               opacity={1.0 - prog(throw, 0.85, 1.0)}>
+            <g transform={format!("translate({wx} {wy}) rotate({rot}) scale({ws}) translate(-280 -210)")}
+               opacity={1.0 - prog(throw, 0.9, 1.0)}>
                 {editor()}
             </g>
         );
-        // a honey strike through "IDE" just before the throw
-        let strike = quart_out(prog(lb, 1.5, 2.2));
-        let exit = expo_in(prog(lb, 3.6, 4.0));
+        // the trash steps in, opens for the window and shuts on it
+        let can_in = snap(lb - 2.4);
+        let lid = 62.0 * prog(lb, 3.0, 3.5) * (1.0 - snap(lb - 4.5));
+        let jolt = if lb > 4.55 { (-(lb - 4.55) * 6.0).exp() * ((lb - 4.55) * 20.0).sin() * 6.0 } else { 0.0 };
+        let (body, lid) = trash(lid);
+        let can_t = format!("translate(0 {})", (1.0 - can_in) * 260.0 + jolt);
+        // a honey strike through "IDE" just before the flick
+        let strike = quart_out(prog(lb, 2.7, 3.3));
+        let exit = expo_in(prog(lb, 6.6, 7.0));
         fframes::svgr!(
-            <g>
+            <g opacity={1.0 - exit}>
                 {ground(&frame, 0.72, 0.5, 0.32, 0.18)}
                 {window}
-                <g opacity={1.0 - exit} transform={format!("translate(0 {})", -exit * 90.0)}>
-                    {Slam::new(146.0, 470.0, "I FIRED", 220.0, BONE).draw(lb + 0.12, 0.0, 120.0)}
-                    {Slam::new(146.0, 690.0, "MY IDE.", 220.0, BONE).draw(lb - 0.5, 0.0, 120.0)}
+                <g transform={can_t} opacity={prog(lb, 2.4, 2.6)}>{body}{lid}</g>
+                <g transform={format!("translate(0 {})", -exit * 90.0)}>
+                    {Slam::new(146.0, 470.0, "I FIRED", 220.0, BONE).draw(lb - 0.35, 0.0, 120.0)}
+                    {Slam::new(146.0, 690.0, "MY IDE.", 220.0, BONE).draw(lb - 1.5, 0.0, 120.0)}
                     <rect x="146" y="604" width={(strike * 840.0).max(0.5)} height="22" fill={HONEY} />
                 </g>
             </g>
@@ -86,59 +124,27 @@ impl Scene for FiredScene {
     }
 }
 
-/// The cells of the hive: (column, row) on a pointy-top grid, and the name on each.
-const CELLS: &[(f32, f32, &str)] = &[
-    (0.0, 0.0, "claude"),
-    (1.0, 0.0, "codex"),
-    (-0.5, 1.0, "a view"),
-    (0.5, 1.0, "opencode"),
-    (1.5, 1.0, "a widget"),
-    (0.0, 2.0, "pi"),
-    (1.0, 2.0, "a tool"),
-];
+/// Where the recording of the tiles landing sits.
+const HIVE_BOX: (f32, f32, f32, f32) = (930.0, 250.0, 860.0, 538.0);
 
 impl Scene for HiveScene {
     fn duration(&self) -> Duration<'_> {
         Self::frames()
     }
 
-    fn render_frame<'a>(&'a self, frame: Frame, _ctx: &FFramesContext<'a, '_>) -> Svgr<'a> {
+    fn render_frame<'a>(&'a self, frame: Frame, ctx: &FFramesContext<'a, '_>) -> Svgr<'a> {
         let lb = Self::lb(&frame);
-        let r = 118.0;
-        let (ox, oy) = (1290.0, 300.0);
-        let cells: Vec<Svgr> = CELLS
-            .iter()
-            .enumerate()
-            .map(|(i, (c, row, name))| {
-                let at = 0.4 + i as f32 * 0.5;
-                let s = soft(lb - at);
-                let cx = ox + c * r * 3f32.sqrt();
-                let cy = oy + row * r * 1.5;
-                // each cell flies in from the edge it is nearest
-                let from_x = (cx - 1380.0) * 1.8 * (1.0 - s);
-                let from_y = (cy - 470.0) * 1.8 * (1.0 - s);
-                let agent = !name.starts_with("a ");
-                let fill = if agent { "#16171a" } else { HONEY };
-                let text = if agent { BONE } else { INK };
-                let name = name.to_string();
-                let t = format!("translate({} {})", from_x, from_y);
-                fframes::svgr!(
-                    <g transform={t} opacity={prog(lb, at, at + 0.15)}>
-                        <path d={hex_path(cx, cy, r - 6.0)} fill={fill} stroke={if agent { LINE2 } else { HONEY }} stroke-width="2" />
-                        <text x={cx} y={cy + 9.0} text-anchor="middle" font-family={MONO} font-weight="700" font-size="25" fill={text}>{name}</text>
-                    </g>
-                )
-            })
-            .collect();
-        let exit = expo_in(prog(lb, 3.65, 4.0));
+        let (x, y, w, h) = HIVE_BOX;
+        let enter = expo_out(prog(lb, 0.0, 0.8));
+        let exit = expo_in(prog(lb, 6.65, 7.0));
         fframes::svgr!(
-            <g>
+            <g opacity={1.0 - exit}>
                 {ground(&frame, 0.7, 0.45, 0.36, 0.3)}
-                <g opacity={1.0 - exit}>
-                    {cells}
-                    {Slam::new(146.0, 470.0, "HIRED", 220.0, BONE).draw(lb, -160.0, 0.0)}
-                    {Slam::new(146.0, 690.0, "A HIVE.", 220.0, HONEY).draw(lb - 0.5, -160.0, 0.0)}
+                <g transform={format!("translate({} 0)", (1.0 - enter) * 160.0)} opacity={enter}>
+                    {framed_clip(&frame, ctx, "hive.mp4", 0.0, x, y, w, h, "THE CANVAS · RECORDED IN THE APP".to_owned())}
                 </g>
+                {Slam::new(146.0, 470.0, "HIRED", 200.0, BONE).draw(lb - 0.9, -160.0, 0.0)}
+                {Slam::new(146.0, 680.0, "A HIVE.", 200.0, HONEY).draw(lb - 1.8, -160.0, 0.0)}
             </g>
         )
     }

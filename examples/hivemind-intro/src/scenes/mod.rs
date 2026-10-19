@@ -19,28 +19,12 @@ macro_rules! beat_scene {
     };
 }
 
-pub mod anywhere;
-pub mod api;
-pub mod canvas;
+pub mod asks;
+pub mod board;
 pub mod hook;
-pub mod island;
 pub mod outro;
-pub mod plugins;
-pub mod prompt;
-pub mod origin;
-pub mod render;
-pub mod the_loop;
-pub mod widgets;
 
-pub use anywhere::AnywhereScene;
-pub use api::{ApiScene, FanoutScene};
-pub use canvas::CanvasScene;
+pub use asks::{AskScene, ToolScene, ViewScene, WidgetScene};
+pub use board::BoardScene;
 pub use hook::{FiredScene, HiveScene};
-pub use island::{AskScene, IslandScene};
-pub use origin::OriginScene;
-pub use outro::{OutroScene, SilentScene};
-pub use plugins::PluginsScene;
-pub use prompt::PromptScene;
-pub use render::RenderScene;
-pub use the_loop::LoopScene;
-pub use widgets::{ToolScene, WidgetScene};
+pub use outro::OutroScene;
