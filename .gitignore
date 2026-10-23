@@ -4,3 +4,5 @@ examples/*/takes/
 examples/*/music/
 hosts.local.yaml
 *.local.*
+examples/hivemind-intro/voice/*.mp3
+examples/hivemind-intro/voice/try/

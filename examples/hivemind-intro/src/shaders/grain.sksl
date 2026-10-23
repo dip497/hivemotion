@@ -1,0 +1,23 @@
+// Film grain and a vignette over every frame.
+uniform float3 iResolution;
+uniform float iTime;
+uniform float uGrain;
+uniform float uVignette;
+
+float hash(float2 p) {
+    p = fract(p * float2(443.897, 441.423));
+    p += dot(p, p.yx + 19.19);
+    return fract((p.x + p.y) * p.x);
+}
+
+half4 main(float2 coord) {
+    float2 uv = coord / iResolution.xy;
+    float t = floor(iTime * 30.0);
+    float n = hash(floor(coord / 1.5) + float2(t * 17.13, t * 3.71)) - 0.5;
+    float g = n * uGrain;
+    float v = smoothstep(0.45, 1.25, length((uv - 0.5) * float2(1.0, 0.8)) * 1.6) * uVignette;
+    float3 col = g > 0.0 ? float3(1.0) : float3(0.0);
+    float a = abs(g);
+    float outA = a + v * (1.0 - a);
+    return half4(half3(col * a), outA);
+}

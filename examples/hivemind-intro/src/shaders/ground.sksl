@@ -1,0 +1,23 @@
+// The ground every scene stands on: a barely visible honeycomb drifting on near-black.
+uniform float3 iResolution;
+uniform float iTime;
+uniform float uComb;       // honeycomb strength
+uniform float4 uInk;
+
+// distance to the nearest edge of a pointy-top hex cell of size s
+float hexEdge(float2 p, float s) {
+    float2 r = float2(1.0, 1.7320508);
+    float2 h = r * 0.5;
+    float2 a = mod(p / s, r) - h;
+    float2 b = mod(p / s - h, r) - h;
+    float2 g = dot(a, a) < dot(b, b) ? a : b;
+    float2 q = abs(g);
+    float d = max(dot(q, normalize(float2(1.0, 1.7320508))), q.x);
+    return (0.5 - d) * s;
+}
+half4 main(float2 coord) {
+    float e = 1.0 / iResolution.y;
+    float comb = 1.0 - smoothstep(0.0, 1.2 * e, hexEdge(coord / iResolution.y + float2(0.0, iTime * 0.004), 0.085));
+    float a = comb * uComb * 0.22;
+    return half4(half3(uInk.rgb * a), a);
+}
